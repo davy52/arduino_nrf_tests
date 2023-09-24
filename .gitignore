@@ -2,3 +2,4 @@ docs/*
 build/*
 .vscode/*
 setup_cygdrive/*
+Makefiles/envs.sh
