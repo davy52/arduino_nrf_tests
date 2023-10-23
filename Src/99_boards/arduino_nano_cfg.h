@@ -2,7 +2,8 @@
 #define ARDUINO_NANO_CFG_H
 
 #define F_CPU 16000000UL
-#include <xc.h>
+//#include <xc.h>
+#include "avr/io.h"
 
 // pin definitions
 // analog pins
@@ -31,4 +32,7 @@
 #define D12 _BV(PB4)
 #define D13 _BV(PB5)
 
+
+// buildins
+#define LED_BUILTIN D13
 #endif /* ARDUINO_NANO_CFG_H */
