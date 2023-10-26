@@ -10,17 +10,18 @@
 // ENUMS
 
 typedef enum {
-    LSB_FIRST = 0,
-    MSB_FIRST = 1
+    SPI_LSB_FIRST = 0,
+    SPI_MSB_FIRST = 1
 } spi_master_data_order_t;
 
 typedef enum {
-    CLK_LOW_IDLE = 0,
-    CLK_HIGH_IDLE = 1
+    SPI_CLK_IDLE_LOW = 0,
+    SPI_CLK_IDLE_HIGH = 1
 } spi_master_clock_idle_t;
 
 
 /* Public Functions */
+#define spi_master_int() ISR(SPI_STC_vect)
 
 /**
  * @brief SPI Master Init function. Must be called first before any other SPI function

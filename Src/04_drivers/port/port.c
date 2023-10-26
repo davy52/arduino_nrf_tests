@@ -1,6 +1,6 @@
 #include "port.h"
 
-void set_pinMode(pin_t pin, pin_mode_t mode)
+void port_set_pinMode(pin_t pin, pin_mode_t mode)
 {
     if(mode & INPUT){
         *(pin.dir_reg) &= ~(1<<pin.num);
@@ -15,7 +15,7 @@ void set_pinMode(pin_t pin, pin_mode_t mode)
     }
 }
 
-pin_mode_t get_pinMode(pin_t pin)
+pin_mode_t port_get_pinMode(pin_t pin)
 {
     if(*(pin.dir_reg) & (1<<pin.num)){
         return OUTPUT;
@@ -30,10 +30,10 @@ pin_mode_t get_pinMode(pin_t pin)
     return -1;
 }
 
-void set_pinState(pin_t pin, pin_state_t state)
+void port_set_pinState(pin_t pin, pin_state_t state)
 {
-    if(*(pin.dir_reg) & (1<<pin.num) == 0){
-        return;     // you should use set_pinMode to change pullup
+    if((*(pin.dir_reg) & (1<<pin.num)) == 0){
+        return;     // you should use port_set_pinMode to change pullup
     }
     
     if(state == HIGH){
@@ -45,7 +45,7 @@ void set_pinState(pin_t pin, pin_state_t state)
     return;
 }
 
-pin_state_t get_pinState(pin_t pin)
+pin_state_t port_get_pinState(pin_t pin)
 {
     return (*(pin.in_reg) & (1<<pin.num)) ? HIGH : LOW;
 }

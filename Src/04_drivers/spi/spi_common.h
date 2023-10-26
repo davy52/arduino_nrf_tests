@@ -7,8 +7,8 @@
 // ENUMS
 
 typedef enum {
-    CLK_PHASE_LEADING = 0,
-    CLK_PHASE_TRAILING = 1
+    SPI_CLK_PHASE_LEADING = 0,
+    SPI_CLK_PHASE_TRAILING = 1
 } spi_common_clk_phase_t;
 
 typedef enum {
@@ -38,8 +38,8 @@ typedef struct {
 } spi_common_status_t;
 
 typedef enum {
-    E_OK = 0,
-    E_SET_ALREADY = 1
+    SPI_ERR_OK = 0,
+    SPI_ERR_SET_ALREADY = 1
 } spi_common_error_t;
 
 #endif /* SPI_COMMON_H */

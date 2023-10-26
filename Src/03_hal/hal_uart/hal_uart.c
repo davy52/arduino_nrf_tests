@@ -75,18 +75,35 @@ hal_uart_err_t hal_uart_init(uint32_t f_cpu, uint16_t baud_rate, uint8_t setting
     usart_settings.f_cpu = f_cpu;
 
     
+    if(tx_buffer_handle != 0){
+        if(RB_ERR_OK != rb_deinit(tx_buffer_handle)){
+            ret_val = HAL_UART_ERR_NOT_OK;
+            return ret_val;
+        }
+    }
+
+    if(rx_buffer_handle != 0){
+        if(RB_ERR_OK != rb_deinit(rx_buffer_handle)){
+            ret_val = HAL_UART_ERR_NOT_OK;
+            return ret_val;
+        }
+    }
+
     if(RB_ERR_OK != rb_init(&tx_buffer_handle, tx_buffer_size)){
         ret_val = HAL_UART_ERR_NOT_OK;
+        return ret_val;
     }
 
     if(RB_ERR_OK != rb_init(&rx_buffer_handle, rx_buffer_size)){
         ret_val = HAL_UART_ERR_NOT_OK;
+        return ret_val;
     }
     
     hal_uart_state = HAL_UART_IDLE;
 
     if(USART_ERR_OK != usart_init(usart_settings)){
         ret_val = HAL_UART_ERR_NOT_OK;
+        return ret_val;
     }
 
     return ret_val;

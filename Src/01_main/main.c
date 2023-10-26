@@ -14,8 +14,9 @@
 
 #include "uart_control.h"
 
-#include "hal_uart.h"
+#include "spi_master.h"
 #include "debug.h"
+#include "arduino_boards.h"
 #include "util/delay.h"
 
 // FUSES = {
@@ -31,14 +32,16 @@
 int main(void)
 {
     sei();
+    spi_master_init(SPI_INT_DISABLE, SPI_MSB_FIRST, SPI_CLK_IDLE_LOW, SPI_CLK_PHASE_LEADING, SPI_DIV_128);
+    log_uart_init();
 
-    //init uart control
-    u_control_init();
+    uint8_t data[5] = {0x55 , 0, 0, 0, 0};
 
     while(1){
-        // run uart control
-        u_control_run();
+        log_uart(data, 1);
+        spi_master_transmit(0X55);
+        while(!(spi_master_check_status()).transfer_clomplete_flag);
         
-        // delay_ms(200);
+        delay_ms(200);
     }
 }

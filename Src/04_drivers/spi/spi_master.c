@@ -1,4 +1,5 @@
 #include "spi_master.h"
+#include "debug.h"
 
 void spi_master_init(spi_common_int_en_t int_en, spi_master_data_order_t data_order, \
         spi_master_clock_idle_t clk_idle_polarity, spi_common_clk_phase_t clk_phase, spi_common_clk_div_t clk_div)
@@ -14,8 +15,12 @@ void spi_master_init(spi_common_int_en_t int_en, spi_master_data_order_t data_or
     SPCR_new |= clk_div & 0x03;
     
     SPCR = SPCR_new;
+    log_uart_init();
+    log_uart(&SPCR_new, 1);
 
     SPSR |= (clk_div >> 2) << SPI2X;
+    
+    DDRB |= (0b1011 << 2); //FIXME
 }
 
 void spi_master_transmit(uint8_t data)
