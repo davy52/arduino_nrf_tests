@@ -15,8 +15,6 @@ void spi_master_init(spi_common_int_en_t int_en, spi_master_data_order_t data_or
     SPCR_new |= clk_div & 0x03;
     
     SPCR = SPCR_new;
-    log_uart_init();
-    log_uart(&SPCR_new, 1);
 
     SPSR |= (clk_div >> 2) << SPI2X;
     

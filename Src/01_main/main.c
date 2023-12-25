@@ -18,30 +18,34 @@
 #include "debug.h"
 #include "arduino_boards.h"
 #include "util/delay.h"
+#include "hal_uart.h"
 
-// FUSES = {
-//     .low = LFUSE_DEFAULT | FUSE_CKDIV8,
-//     .high = HFUSE_DEFAULT,
-//     .extended = EFUSE_DEFAULT
-// };
+ FUSES = {
+     .low = LFUSE_DEFAULT | FUSE_CKDIV8,
+     .high = HFUSE_DEFAULT,
+     .extended = EFUSE_DEFAULT
+ };
 
-// LOCKBITS = LOCKBITS_DEFAULT;
+LOCKBITS = LOCKBITS_DEFAULT;
 
 
 #include <stdlib.h>
 int main(void)
 {
     sei();
-    spi_master_init(SPI_INT_DISABLE, SPI_MSB_FIRST, SPI_CLK_IDLE_LOW, SPI_CLK_PHASE_LEADING, SPI_DIV_128);
-    log_uart_init();
 
-    uint8_t data[5] = {0x55 , 0, 0, 0, 0};
+    uint8_t data[16] = "test123\n";
+    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16u, 16u);
+    uint16_t buf_cnt;
 
+    int i = 0;
+    hal_uart_sendBytes(data, 7);
     while(1){
-        log_uart(data, 1);
-        spi_master_transmit(0X55);
-        while(!(spi_master_check_status()).transfer_clomplete_flag);
-        
-        delay_ms(200);
+        hal_uart_getRxBufferCount(&buf_cnt);
+        if(buf_cnt > 0){
+            hal_uart_readBytes(data, buf_cnt);
+            hal_uart_sendBytes(data, buf_cnt);
+        }
+        delay_ms(50);
     }
 }
