@@ -27,7 +27,7 @@ PORT_FLAG := $(if $(PORT), -P $(PORT), )
 BUILD_DIR=./build
 
 # project name
-P_NAME=arduino_uart_control
+P_NAME=arduino_common
 
 # binaries
 HEX=$(P_NAME).hex
