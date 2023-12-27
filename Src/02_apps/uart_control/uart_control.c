@@ -1,7 +1,10 @@
 #include "uart_control.h"
 
-#include <stdint-gcc.h>
+#ifndef FCPU //FIXME: this should not be defined here
+    #define F_CPU 8000000UL 
+#endif
 
+#include <stdint.h>
 #include "hal_uart.h"
 #include "avr/io.h"
 
