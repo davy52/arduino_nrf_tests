@@ -374,7 +374,7 @@ static inline void u_contol_err()
 
 void u_control_init()
 {
-    while(HAL_UART_ERR_OK != hal_uart_init(F_CPU, 9600u, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_EVEN | HAL_UART_STOP_1BIT, 16u, 16u));
+    while(HAL_UART_ERR_OK != hal_uart_init(F_CPU, 9600u, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16u, 16u));
 
     state = STATE_IDLE;
     command = COMMAND_NONE;

@@ -20,32 +20,35 @@
 #include "util/delay.h"
 #include "hal_uart.h"
 
- FUSES = {
+/*  FUSES = {
      .low = LFUSE_DEFAULT | FUSE_CKDIV8,
      .high = HFUSE_DEFAULT,
      .extended = EFUSE_DEFAULT
- };
+ }; */
 
-LOCKBITS = LOCKBITS_DEFAULT;
+// LOCKBITS = LOCKBITS_DEFAULT;
 
 
 #include <stdlib.h>
 int main(void)
 {
+    uint8_t states = 0;
+
     sei();
 
-    uint8_t data[16] = "test123\n";
-    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16u, 16u);
-    uint16_t buf_cnt;
-
-    int i = 0;
-    hal_uart_sendBytes(data, 7);
+    port_set_pinMode(D3, PORT_OUTPUT);
+    port_set_pinMode(D4, PORT_OUTPUT);
+    port_set_pinMode(D5, PORT_OUTPUT);
+    port_set_pinMode(D13, PORT_OUTPUT);
+    
     while(1){
-        hal_uart_getRxBufferCount(&buf_cnt);
-        if(buf_cnt > 0){
-            hal_uart_readBytes(data, buf_cnt);
-            hal_uart_sendBytes(data, buf_cnt);
-        }
-        delay_ms(50);
+
+        port_set_pinState(D3, states & 1);
+        port_set_pinState(D4, (states & 2) >> 1);
+        port_set_pinState(D5, (states & 4) >> 2);
+        port_toggle_pinState(D13);
+
+        states++;
+        delay_ms(1000);
     }
 }

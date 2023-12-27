@@ -1,209 +1,156 @@
 #ifndef PORT_H
 #define PORT_H
 
-// PORT definitions
+#include <stdint.h>
 
+// TODO: add safety checks 
+// dont let state be changed when pin is set to input
+// same with toggling
+// same with entire ports
 
-#include "avr/io.h"
-
-// TYPES ===================================
-
-/*
+/**
  * @brief enum for possible states of a pin
  * 
  */
 typedef enum {
-    LOW = 0,
-    HIGH = 1
-} pin_state_t;
+    PORT_LOW = 0,
+    PORT_HIGH = 1
+} port_pin_state_t;
 
-/*
+/**
  * @brief enum for possible modes of a pin
  * 
  */
 typedef enum {
-    INPUT = 0x0,
-    OUTPUT = 0x1,
-    PULLDOWN = 0x2,
-    PULLUP = 0x6,
-    INPUT_PULLDOWN = INPUT | PULLDOWN,
-    INPUT_PULLUP = INPUT | PULLUP,
-} pin_mode_t;
+    PORT_INPUT = 0x0,
+    PORT_OUTPUT = 0x1,
+    PORT_PULLDOWN = 0x2,
+    PORT_PULLUP = 0x6,
+    PORT_INPUT_PULLDOWN = PORT_INPUT | PORT_PULLDOWN,
+    PORT_INPUT_PULLUP = PORT_INPUT | PORT_PULLUP,
+} port_pin_mode_t;
 
-
-typedef const struct 
+typedef struct 
 {
     volatile uint8_t* data_reg;
     volatile uint8_t* dir_reg;
     volatile uint8_t* in_reg;
     uint8_t num;
-} pin_t;
+} port_pin_t;
+
+typedef port_pin_t* port_port_t;
+
+typedef uint8_t port_portState_t;
+
+// ports
+extern const port_port_t port_A[8];
+extern const port_port_t port_B[8];
+extern const port_port_t port_C[8];
+extern const port_port_t port_D[8];
 
 // pins
-pin_t d0 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 0u
-};
+extern const port_pin_t port_A1;
+extern const port_pin_t port_A2;
+extern const port_pin_t port_A3;
+extern const port_pin_t port_A4;
+extern const port_pin_t port_A5;
+extern const port_pin_t port_A6;
+extern const port_pin_t port_A7;
 
-pin_t d1 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 1u
-};
+extern const port_pin_t port_B0; 
+extern const port_pin_t port_B1; 
+extern const port_pin_t port_B2; 
+extern const port_pin_t port_B3; 
+extern const port_pin_t port_B4; 
+extern const port_pin_t port_B5; 
+extern const port_pin_t port_B6; 
+extern const port_pin_t port_B7; 
 
-pin_t d2 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 2u
-};
+extern const port_pin_t port_C0; 
+extern const port_pin_t port_C1; 
+extern const port_pin_t port_C2; 
+extern const port_pin_t port_C3; 
+extern const port_pin_t port_C4; 
+extern const port_pin_t port_C5; 
+extern const port_pin_t port_C6; 
+extern const port_pin_t port_C7; 
 
-pin_t d3 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 3u
-};
-
-pin_t d4 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 4u
-};
-
-pin_t d5 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 5u
-};
-
-pin_t d6 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 6u
-};
-
-pin_t d7 = {
-    .data_reg   = &PORTD,
-    .dir_reg    = &DDRD,
-    .in_reg     = &PIND,
-    .num        = 7u
-};
-
-pin_t d8 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 0u
-};
-
-pin_t d9 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 1u
-};
-
-pin_t d10 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 2u
-};
-
-pin_t d11 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 3u
-};
-
-pin_t d12 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 4u
-};
+extern const port_pin_t port_D0; 
+extern const port_pin_t port_D1; 
+extern const port_pin_t port_D2; 
+extern const port_pin_t port_D3; 
+extern const port_pin_t port_D4; 
+extern const port_pin_t port_D5; 
+extern const port_pin_t port_D6; 
+extern const port_pin_t port_D7; 
 
 
-pin_t d13 = {
-    .data_reg   = &PORTB,
-    .dir_reg    = &DDRB,
-    .in_reg     = &PINB,
-    .num        = 5u
-};
-
-pin_t a0 = {
-    .data_reg   = &PORTC,
-    .dir_reg    = &DDRC,
-    .in_reg     = &PINC,
-    .num        = 0u
-};
-
-pin_t a1 = {
-    .data_reg   = &PORTC,
-    .dir_reg    = &DDRC,
-    .in_reg     = &PINC,
-    .num        = 1u
-};
-
-pin_t a2 = {
-    .data_reg   = &PORTC,
-    .dir_reg    = &DDRC,
-    .in_reg     = &PINC,
-    .num        = 2u
-};
-
-pin_t a3 = {
-    .data_reg   = &PORTC,
-    .dir_reg    = &DDRC,
-    .in_reg     = &PINC,
-    .num        = 3u
-};
 
 // FUNCTIONS ===================================
 
 
-/*
+/**
  * @brief Set the mode of a pin
  * 
- * @param pin pin designation (TODO: pin designation not defined yet)
+ * @param pin pin designation 
  * @param mode pinmode
  */
-void port_set_pinMode(pin_t pin, pin_mode_t mode);
+void port_set_pinMode(port_pin_t pin, port_pin_mode_t mode);
 
 
-/*
+/**
  * @brief Get the mode of a pin
  * 
- * @param pin pin designation (TODO: pin designation not defined yet)
- * @return pin_mode_t 
+ * @param pin pin designation 
+ * @return port_pin_mode_t 
  */
-pin_mode_t port_get_pinMode(pin_t pin);
+port_pin_mode_t port_get_pinMode(port_pin_t pin);
 
 
-/*
+/**
  * @brief Set the state of a pin
  * 
- * @param pin pin designation (TODO: pin designation not defined yet)
+ * @param pin pin designation 
  * @param state state to be set on an output pin
  */
-void port_set_pinState(pin_t pin, pin_state_t state);
+void port_set_pinState(port_pin_t pin, port_pin_state_t state);
 
 
-/*
+/**
  * @brief Get the state of a pin 
  * 
- * @param pin  pin designation (TODO: pin designation not defined yet)
- * @return pin_state_t state of selected pin
+ * @param pin  pin designation 
+ * @return port_pin_state_t state of selected pin
  */
-pin_state_t port_get_pinState(pin_t pin);
+port_pin_state_t port_get_pinState(port_pin_t pin);
 
+/**
+ * @brief Toggle state of a pin
+ * 
+ * @param pin pin which state is to be toggled
+ */
+void port_toggle_pinState(port_pin_t pin);
+
+/**
+ * @brief Set state of entire port
+ * 
+ * @param port port which state is to be set
+ */
+void port_set_portState(port_port_t port, port_portState_t port_state);
+
+/**
+ * @brief Get state of entire port
+ * 
+ * @param port port which state is to be returned
+ * @return port_portState_t port state 
+ */
+port_portState_t port_get_portState(port_port_t port);
+
+/**
+ * @brief Toggle port states
+ * 
+ * @param port port which state is to be toggled
+ */
+void port_toggle_portState(port_port_t port, uint8_t toggleMask);
 
 #endif /* PORT_H */
