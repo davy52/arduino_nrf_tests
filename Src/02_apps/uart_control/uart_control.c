@@ -3,7 +3,7 @@
 #include <stdint-gcc.h>
 
 #include "hal_uart.h"
-#include "arduino_boards.h"
+#include "avr/io.h"
 
 #include "debug.h"
 

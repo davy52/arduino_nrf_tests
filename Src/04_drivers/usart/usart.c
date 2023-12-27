@@ -297,10 +297,15 @@ inline usart_err_int_t usart_check_err_int()
 
 void usart_clear_buff()
 {
-    uint8_t data;
+    /* uint8_t data;
     data = UDR0;
     data = UDR0;
-    data = UDR0;
+    data = UDR0; */
+    
+    // this should work? //TODO: CHECK ME
+    UDR0;
+    UDR0;
+    UDR0;
     
     UCSR0A &= ~(0b11111100);
 }
