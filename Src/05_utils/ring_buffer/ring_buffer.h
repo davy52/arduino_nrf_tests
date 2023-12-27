@@ -12,8 +12,12 @@ typedef enum
     RB_ERR_FULL,
     RB_ERR_EMPTY,
     RB_ERR_NO_SPACE,
-    RB_ERR_NOT_ENOUGH_DATA
+    RB_ERR_NOT_ENOUGH_DATA,
+    RB_ERR_LOST_WRITES,
 } rb_err_t;
+
+// TODO: makro for static ring buffer?
+// #define rb_create_staticbuffer(name, size) \
 
 rb_err_t rb_init(ring_buffer_handle_t* handle, uint16_t size);
 
@@ -36,6 +40,15 @@ uint16_t rb_spaceLeft(ring_buffer_handle_t handle);
 uint16_t rb_spaceUsed(ring_buffer_handle_t handle);
 
 rb_err_t rb_clear(ring_buffer_handle_t handle);
+
+/**
+ * @brief get number of lost writes 
+ *  value gets cleared after read
+ * 
+ * @param handle 
+ * @return rb_err_t 
+ */
+uint16_t rb_get_lost_writes(ring_buffer_handle_t handle);
 
 
 #endif /* RING_BUFFER_H */

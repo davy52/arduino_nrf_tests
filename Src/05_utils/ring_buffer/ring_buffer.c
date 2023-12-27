@@ -14,6 +14,7 @@ typedef struct
     uint8_t *tail;
     uint16_t size;
     uint16_t data_size;
+    uint16_t n_lost_writes;
 } ring_buffer_t;
 
 rb_err_t rb_init(ring_buffer_handle_t* handle, uint16_t size)
@@ -38,6 +39,7 @@ rb_err_t rb_init(ring_buffer_handle_t* handle, uint16_t size)
     rb->tail = rb->data_ptr;
     rb->size = 0;
     rb->data_size = size;
+    rb->n_lost_writes = 0;
     
     *handle = (ring_buffer_handle_t)rb;
     return ret_val;
@@ -63,6 +65,7 @@ rb_err_t rb_insert(ring_buffer_handle_t handle, uint8_t data)
 
     if((rb->size >= rb->data_size)){
         ret_val = RB_ERR_FULL;
+        (rb->n_lost_writes)++;
         return ret_val;
     }
 
@@ -119,6 +122,10 @@ rb_err_t rb_pop(ring_buffer_handle_t handle, uint8_t *data)
     if((0 >= (rb->size))){
         ret_val = RB_ERR_EMPTY;
         return ret_val;
+    }
+
+    if(rb->n_lost_writes > 0){
+        ret_val = RB_ERR_LOST_WRITES;
     }
 
     *data = *(rb->tail);
@@ -198,4 +205,11 @@ rb_err_t rb_clear(ring_buffer_handle_t handle)
     (rb->size) = 0u;
     
     return ret_val;
+}
+
+
+uint16_t rb_get_lost_writes(ring_buffer_handle_t handle)
+{
+    ring_buffer_t* rb = (ring_buffer_t*)handle;
+    return (uint16_t)(rb->n_lost_writes);
 }
