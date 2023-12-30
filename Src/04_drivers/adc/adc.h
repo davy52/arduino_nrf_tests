@@ -33,8 +33,8 @@ typedef enum {
 
     ADC_CHANNEL_TEMP    = 0x8,
 
-    ADC_CHANNEL_VBG     = 0xFE,
-    ADC_CHANNEL_GND     = 0xFF
+    ADC_CHANNEL_VBG     = 0xE,
+    ADC_CHANNEL_GND     = 0xF
 } adc_mux_channel_t;
 
 typedef enum {
@@ -69,7 +69,7 @@ typedef struct
     adc_err_t error : 6;     // 6 bits for error
     uint16_t result : 10;     // 10 bits for adc measurement
 
-} adc_measurement_t __attribute__((packed));
+} __attribute__((packed)) adc_measurement_t;
 
 /**
  * @brief adc option setting
