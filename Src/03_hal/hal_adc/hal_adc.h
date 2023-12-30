@@ -61,7 +61,7 @@ hal_adc_err_t hal_adc_init(hal_adc_settings_t settings);
 
 hal_adc_err_t hal_adc_changeSettings(hal_adc_settings_t settings);
 
-hal_adc_err_t hal_adc_getSettings(hal_adc_getSettings* settings);
+hal_adc_err_t hal_adc_getSettings(hal_adc_settings_t* settings);
 
 hal_adc_read_result_t hal_adc_readChannel(hal_adc_channel_t channel);
 
