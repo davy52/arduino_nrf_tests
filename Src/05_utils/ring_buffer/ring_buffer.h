@@ -17,7 +17,7 @@ typedef enum
 } rb_err_t;
 
 // TODO: makro for static ring buffer?
-// #define rb_create_staticbuffer(name, size) \
+// #define rb_create_staticbuffer(name, size) 
 
 rb_err_t rb_init(ring_buffer_handle_t* handle, uint16_t size);
 
