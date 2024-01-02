@@ -1,6 +1,8 @@
 #ifndef HAL_ADC_H
 #define HAL_ADC_H
 
+#include <stdint.h>
+
 typedef enum __hal_adc_err {
     HAL_ADC_ERR_OK = 0,
     HAL_ADC_ERR_BUSY,
@@ -10,13 +12,13 @@ typedef enum __hal_adc_err {
 } hal_adc_err_t;
 
 typedef struct __hal_adc_measurement_float {
-    hal_adc_err_t error,
-    float result,
+    hal_adc_err_t error;
+    float result;
 } hal_adc_read_result_float_t;
 
 typedef struct __hal_adc_measurement_float {
-    hal_adc_err_t error,
-    uint16_t result,
+    hal_adc_err_t error;
+    uint16_t result;
 } hal_adc_read_result_t;
 
 typedef enum __hal_adc_auto_trigger {
