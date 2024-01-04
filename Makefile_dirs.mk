@@ -10,7 +10,7 @@ INCLUDE_DIRS+=./Src/02_apps/nrf_repeater
 INCLUDE_DIRS+=./Src/03_hal/nrf24l01
 INCLUDE_DIRS+=./Src/03_hal/ssd1306
 INCLUDE_DIRS+=./Src/03_hal/hal_uart
-INCLUDE_DIRS+=./Src/03_hal/bmp280
+INCLUDE_DIRS+=./Src/03_hal/bme280
 
 INCLUDE_DIRS+=./Src/04_drivers/port
 INCLUDE_DIRS+=./Src/04_drivers/spi
