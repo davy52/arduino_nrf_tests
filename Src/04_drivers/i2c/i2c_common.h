@@ -4,6 +4,9 @@
 typedef enum {
     I2C_ERR_OK = 0x01,
     I2C_ERR_BUSY,
+    I2C_ERR_BUFF_TOO_SMALL,
+    I2C_ERR_ARR_TOO_SMALL,
+    I2C_ERR_NO_READ,            // there was no reading before this
 
     I2C_ERR_NOT_OK = 0xFF
 } i2c_error_t;
