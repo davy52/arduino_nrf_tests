@@ -34,7 +34,7 @@ typedef union __i2c_TWSR {
 } i2c_TWSR_t;
 
 // TWI Data Register
-typedef uint8_t i2c_TWDR_t
+typedef uint8_t i2c_TWDR_t;
 
 // TWI Slave Address Register
 typedef union __i2c_TWAR {

@@ -6,48 +6,34 @@
 
 #include "i2c_common.h"
 
+// its hal already but...
 
-typedef struct {
-    uint8_t sda_PULLUP : 1;
-    uint8_t scl_PULLUP : 1;
-    uint8_t ack_enable : 1;
-    uint8_t int_enable : 1;
-    uint8_t general_call_enable;
-} i2c_settings_t;
 
 /**
- * @brief I2C Master init - first function to be called before using i2c
+ * @brief TWI modeule init 
  * 
+ * @param settings 
+ * @return i2c_error_t 
  */
-void i2c_master_init(i2c_settings_t settings);
+i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate, uint8_t transmission_buffer);
 
 /**
- * @brief send data to slave
+ * @brief change size of transmission buffer
  * 
+ * @param new_size 
+ * @return i2c_error_t 
+ */
+i2c_error_t i2c_changeBufferSize(uint8_t new_size);
+
+/**
+ * @brief send data to adder
+ * 
+ * @param adder 
  * @param data 
  * @param data_size 
+ * @return i2c_error_t 
  */
-void i2c_master_sendData(uint8_t *data, uint8_t data_size);
-
-/**
- * @brief resend last message
- * 
- */
-void i2c_master_resend(void);
-
-/**
- * @brief check if i2c module is busy
- * 
- * @return uint8_t 
- */
-i2c_error_t i2c_master_isBusy(void);
-
-/**
- * @brief get module state
- * 
- * @return i2c_error_t { I2C_OK, I2C_NOT_OK, I2C_BUSY }
- */
-i2c_error_t i2c_master_getState(void);
+i2c_error_t i2c_master_sendData(uint8_t adder, uint8_t *data, uint8_t data_size);
 
 /**
  * @brief read data from slave
@@ -56,17 +42,17 @@ i2c_error_t i2c_master_getState(void);
  * @param data_size size of data to be read (in bytes)
  * @return i2c_error_t 
  */
-i2c_error_t i2c_master_readData(uint8_t *data, uint8_t data_size);
+i2c_error_t i2c_master_readData(uint8_t adder, uint8_t *data, uint8_t data_size);
 
 /**
- * @brief Construct a new ISR object for i2c interrupts\
- *      to be implemented by user
+ * @brief Get message that was read 
+ *  use after i2c_master_readData()
  * 
+ * @param data pointer to array where message should be copied to 
+ * @param arr_size size of array
+ * @return i2c_error_t 
  */
-ISR(TWI_vect);
+i2c_error_t i2c_master_getMessage(uint8_t *data, uint8_t arr_size);
 
-
-
-void i2c_master_sendTest();
 
 #endif /* I2C_MASTER_H */
