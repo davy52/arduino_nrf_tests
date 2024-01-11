@@ -3,8 +3,6 @@
 
 #include <stdlib.h>
 
-#include "debug.h"
-
 
 #define __at(addr)  __attribute__((address (addr)))
 
@@ -114,7 +112,6 @@ static void i2c_sendStart()
         else{                                               \
             i2c_job_list = i2c_job_list->__next;            \
             i2c_job_iter = 0;                               \
-            blink_pin(port_D4);                             \
             i2c_stopStart();                                \
         }                                                   \
     }                                                       \
@@ -279,11 +276,8 @@ i2c_error_t i2c_master_startTransaction()
 
 ISR(TWI_vect, ISR_BLOCK)
 {
-    blink_slow(1);
-
     if(i2c_job_list == NULL){
         i2c_control.int_en = 0;
-        blink_slow(0);
         return;
     }
 
@@ -371,6 +365,4 @@ ISR(TWI_vect, ISR_BLOCK)
     default:            // should not happen
         break;
     }
-
-    blink_slow(0);
 }
