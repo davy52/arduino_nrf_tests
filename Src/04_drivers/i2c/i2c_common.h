@@ -18,7 +18,7 @@ typedef enum __i2c_rw_bit {
 
 
 
-typedef struct __i2c_ll {
+typedef volatile struct __i2c_ll {
     i2c_error_t status;         // read only
     uint8_t adder;
     i2c_rw_bit_t RW;

@@ -57,6 +57,7 @@ volatile static uint8_t i2c_no_noack;
 static const uint8_t I2C_MAX_NO_NOACK = 1;
 
 volatile static i2c_job_t* i2c_job_list;
+volatile static uint8_t i2c_job_iter;
 
 
 // static functions
@@ -92,66 +93,86 @@ static i2c_error_t i2c_clockSetup(uint32_t cpu_clock, uint32_t scl_freq, uint8_t
     return ret_val;
 }
 
+    
 static void i2c_sendStart()
 {
     i2c_control.int_en = 1;
+    i2c_job_iter = 0;
 
     i2c_control.reg = 0b10100101;
 }
 
-static void i2c_sendStop()
-{
-    i2c_control.int_en = 0;
+#define i2c_handleNextJob();                                \
+ do{                                                          \
+    i2c_job_list->status = I2C_ERR_OK;                      \
+    if(i2c_job_list->__next != NULL){                       \
+        if(i2c_job_list->repeated_start != 0){              \
+            i2c_job_list = i2c_job_list->__next;            \
+            i2c_job_iter = 0;                               \
+            i2c_start();                                    \
+        }                                                   \
+        else{                                               \
+            i2c_job_list = i2c_job_list->__next;            \
+            i2c_job_iter = 0;                               \
+            blink_pin(port_D4);                             \
+            i2c_stopStart();                                \
+        }                                                   \
+    }                                                       \
+    else {                                                  \
+        i2c_job_list = i2c_job_list->__next;                \
+        i2c_job_iter = 0;                                   \
+        i2c_control.int_en = 0;                             \
+        i2c_stop();                                         \
+    }                                                       \
+ }while(0);                                                   \
 
-    i2c_control.write_start_bit = 0;
-    i2c_control.write_stop_bit = 1;
-    i2c_control.int_flag = 1;
+#define i2c_start();                            \
+    do{                                         \
+        i2c_control.write_stop_bit      = 0;    \
+        i2c_control.write_start_bit     = 1;    \
+        i2c_control.ack_en              = 0;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
-}
+#define i2c_stop();                             \
+    do{                                         \
+        i2c_control.write_stop_bit      = 1;    \
+        i2c_control.write_start_bit     = 0;    \
+        i2c_control.ack_en              = 0;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
-static void i2c_sendAdder()
-{
-    if ((i2c_adder & 0x1) == I2C_RW_READ)
-    {
-        i2c_state = I2C_STATE_READ;
-    } else if ((i2c_adder & 0x1) == I2C_RW_WRITE){
-        i2c_state = I2C_STATE_WRITE;
-    }
-    
-    i2c_data = i2c_adder;
-    // i2c_data = 0x54 | I2C_RW_WRITE;
-    i2c_control.reg = 0b10000101;
-}
+#define i2c_stopStart();                        \
+    do{                                         \
+        i2c_control.write_stop_bit      = 1;    \
+        i2c_control.write_start_bit     = 1;    \
+        i2c_control.ack_en              = 0;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
-static void i2c_writeByte()
-{
-    i2c_data = i2c_data_buff[i2c_data_buff_iter];
-    i2c_control.write_stop_bit = 0;
-    i2c_control.write_start_bit = 0;
-    i2c_control.int_flag = 1;
-}
+#define i2c_bits_data();                        \
+    do{                                         \
+        i2c_control.write_stop_bit      = 0;    \
+        i2c_control.write_start_bit     = 0;    \
+        i2c_control.ack_en              = 0;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
-static void i2c_readByte()
-{
-    i2c_data_buff[i2c_data_buff_iter] = i2c_data;
-}
+#define i2c_ack();                              \
+    do{                                         \
+        i2c_control.write_stop_bit      = 0;    \
+        i2c_control.write_start_bit     = 0;    \
+        i2c_control.ack_en              = 1;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
-static void i2c_sendAck()
-{
-    i2c_control.write_start_bit = 0;
-    i2c_control.write_stop_bit = 0;
-    i2c_control.ack_en = 1;
-    i2c_control.int_flag = 1;
-}
-
-static void i2c_sendNoAck()
-{
-    i2c_control.write_start_bit = 0;
-    i2c_control.write_stop_bit = 0;
-    i2c_control.ack_en = 0;
-    i2c_control.int_flag = 1;
-}
-
+#define i2c_noack();                            \
+    do{                                         \
+        i2c_control.write_stop_bit      = 0;    \
+        i2c_control.write_start_bit     = 0;    \
+        i2c_control.ack_en              = 0;    \
+        i2c_control.int_flag            = 1;    \
+    } while(0);
 
 
 i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate)
@@ -167,12 +188,14 @@ i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate)
     }
     
     i2c_control.i2c_en = 1;
-    i2c_control.int_en = 1;
+    i2c_control.int_en = 0;
     // FIXME: i2c_clockSetup ERROR
     // i2c_bitrate = bitrate;
     // i2c_status.prescaler = prescaler;
     i2c_bitrate = 48;
     i2c_status.prescaler = 0x01;
+    
+    i2c_job_iter = 0;
 
    return ret_val; 
 }
@@ -208,6 +231,11 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
     
+    if(i2c_control.int_en == 1){
+        ret_val = I2C_ERR_BUSY;
+        return ret_val;
+    }
+    
     if(job->RW == I2C_RW_WRITE){
         job->adder = (job->adder & 0xFE) | I2C_RW_WRITE;
     } 
@@ -220,115 +248,127 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job)
         i2c_job_list = job;
     }
     else{
-        i2c_job_t* job_iter = i2c_job_list;
-        while(job_iter->__next != NULL){
-            job_iter = job_iter->__next;
+        i2c_job_t* job_ptr = i2c_job_list;
+        while(job_ptr->__next != NULL){
+            job_ptr = job_ptr->__next;
         }
-        job_iter->__next = job;
+        job_ptr->__next = job;
     }
     
     return ret_val;
 }
 
-i2c_error_t i2c_master_startTransaction();
-
-i2c_error_t i2c_master_getMessage(uint8_t *data, uint8_t arr_size)
+i2c_error_t i2c_master_startTransaction()
 {
-    return;
+    i2c_error_t ret_val = I2C_ERR_OK;
+
+    if(i2c_job_list == NULL){
+        ret_val = I2C_ERR_NOT_OK;
+        return ret_val;
+    }
+
+    if(i2c_control.int_en == 1){
+        ret_val = I2C_ERR_NOT_OK;
+        return ret_val;
+    }
+
+    i2c_sendStart();
+    return ret_val;
 }
 
 
-ISR(TWI_vect)
+ISR(TWI_vect, ISR_BLOCK)
 {
     blink_slow(1);
+
+    if(i2c_job_list == NULL){
+        i2c_control.int_en = 0;
+        blink_slow(0);
+        return;
+    }
 
     switch (i2c_status.reg & (~0x07))
     {
     case I2C_STATUS_START_DONE:
+    case I2C_STATUS_RSTART_DONE:
+        i2c_data = i2c_job_list->adder;
+        i2c_bits_data();
+        break;
 
     case I2C_STATUS_SLAW_ACK:
-        i2c_no_noack = 0;
-        i2c_state = I2C_STATE_WRITE;
-        i2c_writeByte();
+        if(i2c_job_list->data_len - i2c_job_iter < 1){
+            if(i2c_job_list->repeated_start){
+                i2c_start();
+            }
+            else{
+                i2c_stop();
+            }
+        }
+        else{
+            i2c_data = i2c_job_list->data[i2c_job_iter];
+            i2c_bits_data();
+        }
         break;
 
     case I2C_STATUS_SLAW_NOACK:
-        i2c_no_noack++;
-        if(i2c_no_noack > I2C_MAX_NO_NOACK){
-            i2c_state = I2C_STATE_ERROR;
-            i2c_sendStop();
-            break;
-        }
-        i2c_sendStart();
+        i2c_start();
         break;
     
     case I2C_STATUS_BYTE_SENT_ACK:
-        i2c_no_noack = 0;
-        i2c_data_buff_iter++;
-        // check if there is more data
-        if(i2c_data_buff_iter >= i2c_data_size){
-            i2c_state = I2C_STATE_IDLE;
-            i2c_data_buff_iter = 0;
-            i2c_sendStop();
-        }else{
-            i2c_writeByte();
+        i2c_job_iter = i2c_job_iter + 1;
+        if(i2c_job_list->data_len - i2c_job_iter < 1){
+            i2c_handleNextJob();
+        }
+        else {
+            i2c_data = i2c_job_list->data[i2c_job_iter];
+            i2c_bits_data();
         }
         break;
         
     case I2C_STATUS_BYTE_SENT_NOACK:
-        i2c_no_noack++;
-        if(i2c_no_noack > I2C_MAX_NO_NOACK){
-            i2c_state = I2C_STATE_ERROR;
-            i2c_sendStop();
-            break;
-        }
-        i2c_sendStart();
+        i2c_handleNextJob();
         break;
 
     case I2C_STATUS_ARBI_LOST_IN_W:
-    // case I2C_STATUS_ARBI_LOST_IN_R: same val
-        i2c_no_noack++;
-        if(i2c_no_noack > I2C_MAX_NO_NOACK){
-            i2c_state = I2C_STATE_ERROR;
-            i2c_sendStop();
-            break;
-        }
-        i2c_sendStart();
-        break;
-        
-    case I2C_STATUS_SLAR_ACK:
-        i2c_no_noack = 0;
-        if(i2c_data_size > 2){
-           i2c_sendAck();
-        } else {
-            i2c_sendNoAck();
-        } 
-        break;
-        
+            break;      // FIXME: case should be handled
+
+    /*
+    case I2C_STATUS_ARBI_LOST_IN_R:
+        break;      // FIXME: case should be handled
+    */
+
     case I2C_STATUS_SLAR_NOACK:
-        i2c_no_noack++;
-        if(i2c_no_noack > I2C_MAX_NO_NOACK){
-            i2c_state = I2C_STATE_ERROR;
-            i2c_sendStop();
-            break;
-        }
-        i2c_sendStart();
+        i2c_handleNextJob();
         break;
-        
-    case I2C_STATUS_BYTE_READ_ACK:
-        i2c_readByte();
-        i2c_data_buff_iter++;
-        
-        if(i2c_data_buff_iter == i2c_data_size - 1){
-            i2c_sendNoAck();
-            break;
-        } else if(i2c_data_buff_iter >= i2c_data_size){
-            i2c_state = I2C_STATE_IDLE;
-            break;
-        } else {
-            i2c_sendAck();
-            break;
+
+    case I2C_STATUS_SLAR_ACK:
+        if(i2c_job_list->data_len - i2c_job_iter < 1){
+            i2c_handleNextJob();
         }
+        else if(i2c_job_list->data_len - i2c_job_iter == 1){
+            i2c_noack();
+        }
+        else {
+            i2c_ack();
+        }
+        break;
+            
+    case I2C_STATUS_BYTE_READ_ACK:
+    case I2C_STATUS_BYTE_READ_NOACK:
+        i2c_job_list->data[i2c_job_iter] = i2c_data;
+        i2c_job_iter = i2c_job_iter + 1;
+        if(i2c_job_list->data_len - i2c_job_iter < 1){
+            i2c_handleNextJob();
+        }
+        else if(i2c_job_list->data_len - i2c_job_iter == 1){
+            i2c_noack();
+        }
+        else {
+            i2c_ack();
+        }
+        break;
+
+    default:            // should not happen
         break;
     }
 
