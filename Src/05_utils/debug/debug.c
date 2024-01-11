@@ -23,6 +23,14 @@ void blink(uint8_t n)
     }
 }
 
+void blink_pin(port_pin_t pin)
+{
+    port_set_pinMode(pin, PORT_OUTPUT);
+    port_set_pinState(pin, PORT_HIGH);
+    _delay_ms(1);
+    port_set_pinState(pin, PORT_LOW);
+}
+
 void blink_dur(uint8_t n, uint32_t dur)
 {
     delay_ms(5);
