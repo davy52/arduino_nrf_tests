@@ -7,6 +7,7 @@ CC=XC8_PATH+XC8_VER+XC8_CC
 CC=avr-gcc
 
 ELF_TO_HEX=avr-objcopy
+ELF_SIZE=avr-size
 
 # DFP setup
 DFP_FAMILY=/AtmegaDFP
@@ -91,6 +92,10 @@ $(HEX): $(ELF)
 		@echo ""
 		@echo making hex
 		$(ELF_TO_HEX) -O ihex -R .eeprom $(BUILD_DIR)/$^ $(BUILD_DIR)/$@
+		@echo ""
+		@echo "Build Complete!"
+		@echo ""
+		@$(ELF_SIZE) -C --mcu=$(UC) $(BUILD_DIR)/$(ELF)
 
 
 # build dir
