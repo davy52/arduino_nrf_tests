@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 
+#include "debug.h"
+
+
 #define __at(addr)  __attribute__((address (addr)))
 
 typedef enum __i2c_states {
@@ -56,17 +59,18 @@ volatile static i2c_TWSR_t i2c_status __at(0xB9);
 volatile static i2c_TWDR_t i2c_data __at(0xBB);
 
 volatile static uint8_t* i2c_data_buff;
-static uint8_t i2c_data_buff_size;
-static uint8_t i2c_data_size;
-static uint8_t i2c_data_buff_iter;
-static uint8_t i2c_adder;
-static uint8_t i2c_no_noack;
+volatile static uint8_t i2c_data_buff_size;
+volatile static uint8_t i2c_data_size;
+volatile static uint8_t i2c_data_buff_iter;
+volatile static uint8_t i2c_adder;
+volatile static uint8_t i2c_no_noack;
 static const uint8_t I2C_MAX_NO_NOACK = 1;
 
 static i2c_states_t i2c_state;
 
 
 // static functions
+// FIXME: !!! dont know what is wrong prescaler gets set to 00
 static i2c_error_t i2c_clockSetup(uint32_t cpu_clock, uint32_t scl_freq, uint8_t* bit_rate, uint8_t* prescaler)
 {
     i2c_error_t ret_val = I2C_ERR_NOT_OK;
@@ -78,15 +82,16 @@ static i2c_error_t i2c_clockSetup(uint32_t cpu_clock, uint32_t scl_freq, uint8_t
 
     // prescalers               4       16      64
     const uint8_t pre_arr[] = { 0x01,   0x02,   0x03};
+    const uint8_t pre_real[] = {4,      16,     64};
     
     // try each prescaler
     for(uint8_t i = 0; i < 3; i++){
-        temp_prescaler = pre_arr[i];
-        temp_bitrate = (uint32_t)((((cpu_clock * temp_prescaler) / scl_freq) - 16) << 1);
-        scl_real = (uint32_t)(cpu_clock/(16 + 2 * temp_bitrate * temp_prescaler));
+        temp_prescaler = pre_real[i];
+        temp_bitrate = (uint8_t)((cpu_clock - (16 * scl_freq)) / 2 * temp_prescaler * scl_freq);
+        scl_real = (uint32_t)(cpu_clock/(16 + (2 * temp_bitrate * temp_prescaler)));
         // if calculated clock if within limits return succes else check the next prescaler
-        if(((scl_real - scl_freq) & 0x7F) <= scl_freq * clock_err){
-            (*prescaler) = temp_prescaler;
+        if(scl_real <= scl_freq + scl_freq * clock_err || scl_real >= scl_freq - scl_freq * clock_err){
+            (*prescaler) = pre_arr[i];
             (*bit_rate) = temp_bitrate;
             ret_val = I2C_ERR_OK;
             return ret_val;
@@ -99,11 +104,18 @@ static i2c_error_t i2c_clockSetup(uint32_t cpu_clock, uint32_t scl_freq, uint8_t
 
 static void i2c_sendStart()
 {
+    i2c_control.int_en = 1;
+
     i2c_control.reg = 0b10100101;
 }
 
 static void i2c_sendStop()
 {
+    i2c_control.int_en = 0;
+
+    i2c_control.write_start_bit = 0;
+    i2c_control.write_stop_bit = 1;
+    i2c_control.int_flag = 1;
 
 }
 
@@ -117,7 +129,8 @@ static void i2c_sendAdder()
     }
     
     i2c_data = i2c_adder;
-    i2c_control.reg = 0b10000100;
+    // i2c_data = 0x54 | I2C_RW_WRITE;
+    i2c_control.reg = 0b10000101;
 }
 
 static void i2c_writeByte()
@@ -165,8 +178,12 @@ i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate, uint8_t transmiss
     
     i2c_control.i2c_en = 1;
     i2c_control.int_en = 1;
-    i2c_bitrate = bitrate;
-    i2c_status.prescaler = prescaler;
+    // FIXME: i2c_clockSetup ERROR
+    // i2c_bitrate = bitrate;
+    // i2c_status.prescaler = prescaler;
+    i2c_bitrate = 48;
+    i2c_status.prescaler = 0x01;
+
     
     i2c_data_buff = (uint8_t*)malloc(sizeof(uint8_t) * transmission_buffer);
     if(i2c_data_buff == NULL){
@@ -198,7 +215,7 @@ i2c_error_t i2c_master_sendData(uint8_t adder, uint8_t *data, uint8_t data_size)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
     
-    if(i2c_state != I2C_STATE_IDLE && i2c_state != I2C_STATE_ERROR){
+    if((i2c_state != I2C_STATE_IDLE) && (i2c_state != I2C_STATE_ERROR)){
         ret_val = I2C_ERR_BUSY;
         return ret_val;
     }
@@ -287,6 +304,8 @@ i2c_error_t i2c_master_getMessage(uint8_t *data, uint8_t arr_size)
 
 ISR(TWI_vect)
 {
+    blink_slow(1);
+
     switch (i2c_status.reg & (~0x07))
     {
     case I2C_STATUS_START_DONE:
@@ -333,10 +352,9 @@ ISR(TWI_vect)
             i2c_state = I2C_STATE_IDLE;
             i2c_data_buff_iter = 0;
             i2c_sendStop();
-            break;
+        }else{
+            i2c_writeByte();
         }
-        
-        i2c_writeByte();
         break;
         
     case I2C_STATUS_BYTE_SENT_NOACK:
@@ -395,4 +413,6 @@ ISR(TWI_vect)
         }
         break;
     }
+
+    blink_slow(0);
 }
