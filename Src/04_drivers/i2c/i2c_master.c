@@ -41,11 +41,6 @@ typedef enum __i2c_status {
     I2C_STATUS_BYTE_READ_NOACK  = 0x58
 } i2c_master_status_t;
 
-typedef enum __i2c_rw_bit {
-    I2C_RW_WRITE = 0x00,
-    I2C_RW_READ = 0x01
-} i2c_rw_bit_t;
-
 // TWI Bit Rade Register
 volatile static i2c_TWBR_t i2c_bitrate __at(0xB8);
 
@@ -58,15 +53,10 @@ volatile static i2c_TWSR_t i2c_status __at(0xB9);
 // TWI Data Register
 volatile static i2c_TWDR_t i2c_data __at(0xBB);
 
-volatile static uint8_t* i2c_data_buff;
-volatile static uint8_t i2c_data_buff_size;
-volatile static uint8_t i2c_data_size;
-volatile static uint8_t i2c_data_buff_iter;
-volatile static uint8_t i2c_adder;
 volatile static uint8_t i2c_no_noack;
 static const uint8_t I2C_MAX_NO_NOACK = 1;
 
-static i2c_states_t i2c_state;
+volatile static i2c_job_t* i2c_job_list;
 
 
 // static functions
@@ -164,7 +154,7 @@ static void i2c_sendNoAck()
 
 
 
-i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate, uint8_t transmission_buffer)
+i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
 
@@ -184,121 +174,67 @@ i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate, uint8_t transmiss
     i2c_bitrate = 48;
     i2c_status.prescaler = 0x01;
 
-    
-    i2c_data_buff = (uint8_t*)malloc(sizeof(uint8_t) * transmission_buffer);
-    if(i2c_data_buff == NULL){
-        ret_val = I2C_ERR_NOT_OK;
-        return ret_val;
-    }
-    
-    i2c_data_buff_size = transmission_buffer;
-    
-
    return ret_val; 
 }
 
-i2c_error_t i2c_changeBufferSize(uint8_t new_size)
+i2c_error_t i2c_master_sendData(i2c_job_t* job)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
     
-    i2c_data_buff = (uint8_t*)realloc(i2c_data_buff, sizeof(uint8_t) * new_size);
+    if(job->RW == I2C_RW_WRITE){
+        job->adder = (job->adder & 0xFE) | I2C_RW_WRITE;
+    } 
+    else{
+        job->adder = (job->adder & 0xFE) | I2C_RW_READ;
+    }
+    job->status = I2C_ERR_BUSY;
     
-    if(i2c_data_buff == NULL){
-        ret_val = I2C_ERR_NOT_OK;
-        return ret_val;
+    if(i2c_job_list == NULL){
+        i2c_job_list = job;
+        i2c_sendStart();
+    }
+    else{
+        i2c_job_t* job_iter = i2c_job_list;
+        while(job_iter->__next != NULL){
+            job_iter = job_iter->__next;
+        }
+        job_iter->__next = job;
     }
     
     return ret_val;
 }
 
-i2c_error_t i2c_master_sendData(uint8_t adder, uint8_t *data, uint8_t data_size)
+i2c_error_t i2c_master_appendJob(i2c_job_t* job)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
     
-    if((i2c_state != I2C_STATE_IDLE) && (i2c_state != I2C_STATE_ERROR)){
-        ret_val = I2C_ERR_BUSY;
-        return ret_val;
+    if(job->RW == I2C_RW_WRITE){
+        job->adder = (job->adder & 0xFE) | I2C_RW_WRITE;
+    } 
+    else{
+        job->adder = (job->adder & 0xFE) | I2C_RW_READ;
+    }
+    job->status = I2C_ERR_BUSY;
+    
+    if(i2c_job_list == NULL){
+        i2c_job_list = job;
+    }
+    else{
+        i2c_job_t* job_iter = i2c_job_list;
+        while(job_iter->__next != NULL){
+            job_iter = job_iter->__next;
+        }
+        job_iter->__next = job;
     }
     
-    if(data_size > i2c_data_buff_size){
-        ret_val = I2C_ERR_BUFF_TOO_SMALL;
-        return ret_val;
-    }
-
-    for(int i = 0; i < data_size; i++){
-        i2c_data_buff[i] = data[i];
-    }
-    
-    i2c_data_size = data_size;
-    i2c_data_buff_iter = 0;
-    i2c_no_noack = 0;
-
-    i2c_adder = adder | I2C_RW_WRITE;
-
-    i2c_state = I2C_STATE_START;
-    i2c_sendStart();
-
     return ret_val;
 }
 
-i2c_error_t i2c_master_readData(uint8_t adder, uint8_t *data, uint8_t data_size)
-{
-    i2c_error_t ret_val = I2C_ERR_OK;
-
-    if(i2c_state != I2C_STATE_IDLE && i2c_state != I2C_STATE_ERROR){
-        ret_val = I2C_ERR_BUSY;
-        return ret_val;
-    }
-    
-    if(data_size > i2c_data_buff_size){
-        ret_val = I2C_ERR_BUFF_TOO_SMALL;
-        return ret_val;
-    }
-
-    for(int i = 0; i < data_size; i++){
-        i2c_data_buff[i] = data[i];
-    }
-    
-    i2c_data_size = data_size;
-    i2c_data_buff_iter = 0;
-
-    i2c_adder = adder | I2C_RW_READ;
-    
-    i2c_state = I2C_STATE_START;
-    i2c_sendStart();
-
-    return ret_val;
-}
+i2c_error_t i2c_master_startTransaction();
 
 i2c_error_t i2c_master_getMessage(uint8_t *data, uint8_t arr_size)
 {
-    i2c_error_t ret_val = I2C_ERR_OK;
-    
-    if(i2c_state != I2C_STATE_IDLE && i2c_state != I2C_STATE_ERROR){
-        ret_val = I2C_ERR_BUSY;
-        return ret_val;
-    }
-    
-    if(i2c_state == I2C_STATE_ERROR){
-        ret_val = I2C_ERR_NOT_OK;
-        return ret_val;
-    }
-    
-    if(i2c_data_buff_iter == 0){
-        ret_val = I2C_ERR_NO_READ;
-        return ret_val;
-    }
-    
-    if(arr_size < i2c_data_size){
-        ret_val = I2C_ERR_ARR_TOO_SMALL;
-        return ret_val;
-    }
-    
-    for(int i = 0; i < i2c_data_size; i++){
-        data[i] = i2c_data_buff[i];
-    }
-
-    return ret_val;
+    return;
 }
 
 
@@ -309,24 +245,6 @@ ISR(TWI_vect)
     switch (i2c_status.reg & (~0x07))
     {
     case I2C_STATUS_START_DONE:
-        switch (i2c_state)
-        {
-        case I2C_STATE_START:
-            i2c_sendAdder();
-            break;
-        
-        case I2C_STATE_WRITE:
-            i2c_writeByte();
-            break;
-            
-        case I2C_STATE_READ:
-            i2c_readByte();
-            break;
-        
-        default:
-            break;
-        }
-        break;
 
     case I2C_STATUS_SLAW_ACK:
         i2c_no_noack = 0;

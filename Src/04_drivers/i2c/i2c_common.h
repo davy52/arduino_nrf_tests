@@ -11,6 +11,24 @@ typedef enum {
     I2C_ERR_NOT_OK = 0xFF
 } i2c_error_t;
 
+typedef enum __i2c_rw_bit {
+    I2C_RW_WRITE = 0x00,
+    I2C_RW_READ = 0x01
+} i2c_rw_bit_t;
+
+
+
+typedef struct __i2c_ll {
+    i2c_error_t status;         // read only
+    uint8_t adder;
+    i2c_rw_bit_t RW;
+    uint8_t repeated_start;
+    uint8_t data_len;
+    uint8_t* data;
+    struct __i2c_ll* __next;    // dont touch that
+} i2c_job_t;
+
+
 
 
 #define SCL A5
