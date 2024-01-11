@@ -49,24 +49,10 @@ void printByte(uint8_t byte)
 
 int main(void)
 {
-    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 16);
-    delay_ms(3000);
-
-    do{
-        uint8_t temp[3] = {0, 0, '\n'};
-        uint8_t temp2 = 23;
-        temp[1] = '0' + temp2 % 10;
-        temp2 /= 10;
-        temp[0] = '0' + temp2 % 10;
-        hal_uart_sendBytes(temp, 3);
-        char* msg = "test\n";
-        hal_uart_sendBytes(msg, 5);
-
-    } while(0);
-    delay_ms(3000);
+    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 40, 16);
 
     i2c_error_t i2c_ret_val;
-    i2c_ret_val = i2c_master_init(F_CPU, 20000, 16);
+    i2c_ret_val = i2c_master_init(F_CPU, 20000);
     delay_ms(50);
     if(i2c_ret_val != I2C_ERR_OK){
         char* msg = "i2c not ok\n";
@@ -83,25 +69,52 @@ int main(void)
     uint8_t data1[] = {0};
     
     while(1){
-        // delay_ms(1000);
-        // uint8_t data1[2] = {0xF4, 0x55};
-        // i2c_ret_val = i2c_master_sendData(adder, data1, 2);
-        // delay_ms(50);
-        // if(i2c_ret_val != I2C_ERR_OK){
-        //     char* msg = "i2c not ok\n";
-        //     hal_uart_sendBytes(msg, 11);
-        // } else {
-        //     char* msg = "i2c is ok :D\n";
-        //     hal_uart_sendBytes(msg, 13);
-        // }
         
-        delay_ms(1000);
+        delay_ms(10);
+        uint8_t data1[2] = {0xF4, 0x55};
         uint8_t data2[1] = {0xFE};
         uint8_t data3[2] = {0};
-        while(i2c_master_sendData(adder, data2, 1) != I2C_ERR_OK);
+        i2c_job_t jobs[3] = {
+            {
+                .adder = adder,
+                .RW = I2C_RW_WRITE,
+                .repeated_start = 0,
+                .data = data1,
+                .data_len = 2
+            },
+            {
+                .adder = adder,
+                .RW = I2C_RW_WRITE,
+                .repeated_start = 1,
+                .data = data2,
+                .data_len = 1
+            },
+            {
+                .adder = adder,
+                .RW = I2C_RW_READ,
+                .repeated_start = 0,
+                .data = data3,
+                .data_len = 2
+            }
+        };
 
-        while(i2c_master_readData(adder, data3, 2) != I2C_ERR_OK);
+        for(int i = 0; i < 3; i++){
+            blink(1);
+            i2c_ret_val = i2c_master_appendJob(&(jobs[i]));
+            if(i2c_ret_val == I2C_ERR_OK){
+                char* msg = "a_ok\n";
+                hal_uart_sendBytes(msg, 5);
+            } else {
+                char* msg = "a_nok\n";
+                hal_uart_sendBytes(msg, 6);
+            }
+            blink(1);
+        }
+        i2c_master_startTransaction();
 
-        
+        delay_ms(500);
+
+        while(jobs[1].status != I2C_ERR_OK);
+        hal_uart_sendBytes(data3, 2);
     }
 }

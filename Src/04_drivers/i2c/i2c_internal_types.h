@@ -55,13 +55,4 @@ typedef union __i2c_TWAMR {
 } i2c_TWAMR_t;
 
 
-// linked list 
-typedef struct __i2c_ll {
-    uint8_t adder;
-    i2c_rw_bit_t RW;
-    uint8_t data_len;
-    uint8_t* data;
-    struct __i2c_ll* __next;
-} i2c_job_t;
-
 #endif /* I2C_INTERNAL_TYPES_H */

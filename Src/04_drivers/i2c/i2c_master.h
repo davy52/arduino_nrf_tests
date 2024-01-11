@@ -39,15 +39,5 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job);
 
 i2c_error_t i2c_master_startTransaction();
 
-/**
- * @brief Get message that was read 
- *  use after i2c_master_readData()
- * 
- * @param data pointer to array where message should be copied to 
- * @param arr_size size of array
- * @return i2c_error_t 
- */
-i2c_error_t i2c_master_getMessage(uint8_t *data, uint8_t arr_size);
-
 
 #endif /* I2C_MASTER_H */
