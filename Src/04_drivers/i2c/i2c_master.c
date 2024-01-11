@@ -273,7 +273,7 @@ i2c_error_t i2c_master_startTransaction()
     return ret_val;
 }
 
-
+// FIXME: handle error cases - noack on write before end
 ISR(TWI_vect, ISR_BLOCK)
 {
     if(i2c_job_list == NULL){
