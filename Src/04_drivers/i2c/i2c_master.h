@@ -15,7 +15,7 @@
  * @param settings 
  * @return i2c_error_t 
  */
-i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate, uint8_t transmission_buffer);
+i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate);
 
 /**
  * @brief change size of transmission buffer
@@ -33,16 +33,11 @@ i2c_error_t i2c_changeBufferSize(uint8_t new_size);
  * @param data_size 
  * @return i2c_error_t 
  */
-i2c_error_t i2c_master_sendData(uint8_t adder, uint8_t *data, uint8_t data_size);
+i2c_error_t i2c_master_sendData(i2c_job_t* job);
 
-/**
- * @brief read data from slave
- * 
- * @param data pointer to array for data
- * @param data_size size of data to be read (in bytes)
- * @return i2c_error_t 
- */
-i2c_error_t i2c_master_readData(uint8_t adder, uint8_t *data, uint8_t data_size);
+i2c_error_t i2c_master_appendJob(i2c_job_t* job);
+
+i2c_error_t i2c_master_startTransaction();
 
 /**
  * @brief Get message that was read 
