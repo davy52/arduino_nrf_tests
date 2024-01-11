@@ -19,6 +19,7 @@
 #include "arduino_boards.h"
 #include "util/delay.h"
 #include "hal_uart.h"
+#include "i2c_master.h"
 
 #include "adc.h"
 /*  FUSES = {
@@ -48,59 +49,59 @@ void printByte(uint8_t byte)
 
 int main(void)
 {
-    uint8_t states = 0;
-
-    adc_measurement_t adc_result;
-    uint8_t str_buf[11];      // "ADC: %1.2f\n\0"
-    sei();
-
-    port_set_pinMode(D3, PORT_OUTPUT);
-    port_set_pinMode(D4, PORT_OUTPUT);
-    port_set_pinMode(D5, PORT_OUTPUT);
-    port_set_pinMode(D13, PORT_OUTPUT);
-
-    
-
     hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 16);
+    delay_ms(3000);
 
-    
-       
-    adc_init(ADC_REF_INTERNAL_VCC | ADC_CHANNEL_0, ADC_PRESCALER_64, ADC_AUTO_FREE);
-    adc_enable();
-
-
-    //adc_startMeasurement();
     do{
-        char* temp = "UART INIT TEST\n";
-        hal_uart_sendBytes(temp, 15);
+        uint8_t temp[3] = {0, 0, '\n'};
+        uint8_t temp2 = 23;
+        temp[1] = '0' + temp2 % 10;
+        temp2 /= 10;
+        temp[0] = '0' + temp2 % 10;
+        hal_uart_sendBytes(temp, 3);
+        char* msg = "test\n";
+        hal_uart_sendBytes(msg, 5);
 
     } while(0);
-    delay_ms(500);
-    printByte(ADMUX);
-    printByte(ADCSRA);
-    printByte(ADCSRB);
-    printByte(DIDR0);
+    delay_ms(3000);
+
+    i2c_error_t i2c_ret_val;
+    i2c_ret_val = i2c_master_init(F_CPU, 20000, 16);
+    delay_ms(50);
+    if(i2c_ret_val != I2C_ERR_OK){
+        char* msg = "i2c not ok\n";
+        hal_uart_sendBytes(msg, 11);
+    } else {
+        char* msg = "i2c is ok :D\n";
+        hal_uart_sendBytes(msg, 13);
+    }
+    
+
+
+    sei();
+    uint8_t adder = 0x76 << 1;
+    uint8_t data1[] = {0};
+    
     while(1){
-        
-        do{
-            adc_result = adc_getMeasurement();
-            hal_uart_sendByte('B');
-            delay_ms(50);
-        }while(adc_result.error != ADC_ERR_OK);
-
-        hal_uart_sendByte('a');
-        if(adc_result.error == ADC_ERR_OK){
-            make_bin(str_buf, adc_result.result, 10);
-            hal_uart_sendBytes(str_buf, 11);
-        }
-        adc_startMeasurement();
-
-        port_set_pinState(D3, states & 1);
-        port_set_pinState(D4, (states & 2) >> 1);
-        port_set_pinState(D5, (states & 4) >> 2);
-        port_toggle_pinState(D13);
-
-        states++;
         // delay_ms(1000);
+        // uint8_t data1[2] = {0xF4, 0x55};
+        // i2c_ret_val = i2c_master_sendData(adder, data1, 2);
+        // delay_ms(50);
+        // if(i2c_ret_val != I2C_ERR_OK){
+        //     char* msg = "i2c not ok\n";
+        //     hal_uart_sendBytes(msg, 11);
+        // } else {
+        //     char* msg = "i2c is ok :D\n";
+        //     hal_uart_sendBytes(msg, 13);
+        // }
+        
+        delay_ms(1000);
+        uint8_t data2[1] = {0xFE};
+        uint8_t data3[2] = {0};
+        while(i2c_master_sendData(adder, data2, 1) != I2C_ERR_OK);
+
+        while(i2c_master_readData(adder, data3, 2) != I2C_ERR_OK);
+
+        
     }
 }
