@@ -64,3 +64,8 @@ void blink_b32(uint32_t b32)
     delay_ms(2);
     port_set_pinState(LED_BUILTIN, 0);
 }
+
+void blink_slow(uint8_t state)
+{
+    port_set_pinState(LED_BUILTIN, state);
+}
