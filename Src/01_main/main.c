@@ -20,6 +20,7 @@
 #include "util/delay.h"
 #include "hal_uart.h"
 #include "i2c_master.h"
+#include "bme280.h"
 
 #include "adc.h"
 /*  FUSES = {
@@ -49,6 +50,8 @@ void printByte(uint8_t byte)
 
 int main(void)
 {
+    sei();
+
     hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 40, 16);
 
     i2c_error_t i2c_ret_val;
@@ -62,59 +65,26 @@ int main(void)
         hal_uart_sendBytes(msg, 13);
     }
     
+    bme280_settings_t bme_settings = {
+        .adder = 0x76,
+        .filter_setting = BME280_FILTER_2,
+        .temp_oversample = BME280_OVERSAMPLE_4,
+        .pressure_oversample = BME280_OVERSAMPLE_4,
+        .humidity_oversample = BME280_OVERSAMPLE_4,
+        .sample_delay = BME280_DELAY_MS_500,
+        .sens_en = BME280_SENS_ALL,
+        .mode = BME280_MODE_CONINOUS
+    };
+    
+    while(bme280_init(bme_settings) != BME280_ERR_OK);
+    
+    blink(1);
 
 
-    sei();
-    uint8_t adder = 0x76 << 1;
-    uint8_t data1[] = {0};
+    bme280_result_all_t result;
     
     while(1){
-        
-        delay_ms(10);
-        uint8_t data1[2] = {0xF4, 0x55};
-        uint8_t data2[1] = {0xFE};
-        uint8_t data3[2] = {0};
-        i2c_job_t jobs[3] = {
-            {
-                .adder = adder,
-                .RW = I2C_RW_WRITE,
-                .repeated_start = 0,
-                .data = data1,
-                .data_len = 2
-            },
-            {
-                .adder = adder,
-                .RW = I2C_RW_WRITE,
-                .repeated_start = 1,
-                .data = data2,
-                .data_len = 1
-            },
-            {
-                .adder = adder,
-                .RW = I2C_RW_READ,
-                .repeated_start = 0,
-                .data = data3,
-                .data_len = 2
-            }
-        };
-
-        for(int i = 0; i < 3; i++){
-            blink(1);
-            i2c_ret_val = i2c_master_appendJob(&(jobs[i]));
-            if(i2c_ret_val == I2C_ERR_OK){
-                char* msg = "a_ok\n";
-                hal_uart_sendBytes(msg, 5);
-            } else {
-                char* msg = "a_nok\n";
-                hal_uart_sendBytes(msg, 6);
-            }
-            blink(1);
-        }
-        i2c_master_startTransaction();
-
+        result = bme280_readAll();
         delay_ms(500);
-
-        while(jobs[1].status != I2C_ERR_OK);
-        hal_uart_sendBytes(data3, 2);
     }
 }

@@ -1,9 +1,12 @@
 #ifndef BME280_H
 #define BME280_H
 
+#include <stdio.h>
+
 typedef enum __bme280_err {
     BME280_ERR_OK      = 0x00,
     BME280_ERR_BUSY,
+    BME280_BAD_ID,
 
 
     BME280_ERR_NOT_OK  = 0xFF
@@ -67,6 +70,7 @@ typedef enum __bme280_filter_settings {
 
 
 typedef struct __bme280_settings {
+    uint8_t adder;
     bme280_sens_en_t sens_en;
     bme280_oversample_t temp_oversample;
     bme280_oversample_t pressure_oversample;

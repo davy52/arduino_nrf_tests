@@ -202,10 +202,10 @@ i2c_error_t i2c_master_sendData(i2c_job_t* job)
     i2c_error_t ret_val = I2C_ERR_OK;
     
     if(job->RW == I2C_RW_WRITE){
-        job->adder = (job->adder & 0xFE) | I2C_RW_WRITE;
+        job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_WRITE;
     } 
     else{
-        job->adder = (job->adder & 0xFE) | I2C_RW_READ;
+        job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_READ;
     }
     job->status = I2C_ERR_BUSY;
     
@@ -234,10 +234,10 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job)
     }
     
     if(job->RW == I2C_RW_WRITE){
-        job->adder = (job->adder & 0xFE) | I2C_RW_WRITE;
+        job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_WRITE;
     } 
     else{
-        job->adder = (job->adder & 0xFE) | I2C_RW_READ;
+        job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_READ;
     }
     job->status = I2C_ERR_BUSY;
     
