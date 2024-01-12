@@ -125,8 +125,8 @@ static void i2c_sendStart()
 
 #define i2c_start();                            \
     do{                                         \
-        i2c_control.write_stop_bit      = 0;    \
         i2c_control.write_start_bit     = 1;    \
+        i2c_control.write_stop_bit      = 0;    \
         i2c_control.ack_en              = 0;    \
         i2c_control.int_flag            = 1;    \
     } while(0);
