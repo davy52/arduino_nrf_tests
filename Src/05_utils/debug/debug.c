@@ -7,8 +7,23 @@
 #endif
 
 void delay_ms(uint32_t ms){
-    while(ms--){
-        _delay_ms(1);
+    if(ms > 1000){
+        uint8_t ms_new = ms / 100;
+        while(ms_new--){
+            _delay_ms(100);
+        }
+        
+    } 
+    else if(ms > 500){
+        uint8_t ms_new = ms / 100;
+        while(ms_new--){
+            _delay_ms(10);
+        }
+    }
+    else {
+        while(ms--){
+            _delay_ms(1);
+        }
     }
 }
 
