@@ -76,7 +76,10 @@ int main(void)
         .mode = BME280_MODE_CONINOUS
     };
     
-    while(bme280_init(bme_settings) != BME280_ERR_OK);
+    while(bme280_init(bme_settings) != BME280_ERR_OK){
+        blink_pin(port_D4);
+        delay_ms(500);
+    }
     
     blink(1);
 
@@ -85,6 +88,7 @@ int main(void)
     
     while(1){
         result = bme280_readAll();
-        delay_ms(500);
+        while(1);
+        delay_ms(3000);
     }
 }
