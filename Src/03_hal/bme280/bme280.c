@@ -4,6 +4,7 @@
 #include "i2c_master.h"
 
 #include "debug.h"
+#include "hal_uart.h"
 
 typedef enum __bme280_mode_internal {
     BME280_MODE_INT_SLEEP   = 0x00,
@@ -48,12 +49,14 @@ static bme280_err_t bme280_write(uint8_t adder, uint8_t value)
         .RW = I2C_RW_WRITE,
         .repeated_start = 0,
         .data = data,
-        .data_len = 2
+        .data_len = 2,
+        .status = I2C_ERR_BUSY
     };
     
     i2c_master_sendData(&job);
     
-    // wait for write to finish
+    delay_ms(2); // FIXME: WTF does not work without delay
+    //
     while(job.status == I2C_ERR_BUSY);
     
     if(job.status == I2C_ERR_NOT_OK){
@@ -114,14 +117,13 @@ static bme280_err_t bme280_read(uint8_t adder, uint8_t len, uint8_t* data)
         .adder = bme280_settings.adder,
         .RW = I2C_RW_WRITE,
         .repeated_start = 1,
-        .data = wdata,
+        .data = &wdata,
         .data_len = 1
     };
 
     while(i2c_master_appendJob(&job_write) != I2C_ERR_OK);
     while(i2c_master_appendJob(&job_read) != I2C_ERR_OK);
     i2c_master_startTransaction();
-    blink_pin(port_D4);
     while(job_read.status == I2C_ERR_BUSY);
 
     if(job_read.status != I2C_ERR_OK || job_write.status != I2C_ERR_OK){
@@ -188,7 +190,7 @@ static uint32_t bme280_comp_H(uint32_t adc_H)
 
     return (uint32_t)(var1 >> 12);
 }
-
+int ftoa(float n, char* res, int afterpoint) ;
 static bme280_err_t bme280_readCompValues()
 {
     bme280_err_t ret_val = BME280_ERR_OK;
@@ -217,6 +219,22 @@ static bme280_err_t bme280_readCompValues()
     dig_H3 = (uint8_t)(regs[2]);
     dig_H4 = (int16_t)(regs[3] << 4 | (regs[4] & 0x0F));
     dig_H5 = (int16_t)((regs[5] & 0xF0) >> 4 | regs[5] << 4);
+
+    int size;
+    char str[20];
+
+    size = intToStr(dig_T1, str, 7);
+    str[size + 1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
+    size = intToStr(dig_T2, str, 7);
+    str[size + 1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
+    size = intToStr(dig_T3, str, 7);
+    str[size + 1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
     
     return ret_val;
 }
@@ -229,14 +247,14 @@ bme280_err_t bme280_init(bme280_settings_t settings)
     
     uint8_t data;
 
-    ret_val = bme280_read(0xD0, 1, &data);
-    if(ret_val != BME280_ERR_OK){
-        return ret_val;
-    }
+    // ret_val = bme280_read(0xD0, 1, &data);
+    // if(ret_val != BME280_ERR_OK){
+    //     return ret_val;
+    // }
     
-    if(data != 0x60){
-        return BME280_BAD_ID;
-    }
+    // if(data != 0x60){
+    //     return BME280_BAD_ID;
+    // }
     
     ret_val = bme280_readCompValues();
     if(ret_val != BME280_ERR_OK){
@@ -257,7 +275,7 @@ bme280_err_t bme280_init(bme280_settings_t settings)
     else {
         data = 0;
     }
-    ret_val = bme280_write(0xF4, data);
+    ret_val = bme280_write(0xF2, data);
     if(ret_val != BME280_ERR_OK){
         return ret_val;
     }
@@ -301,6 +319,72 @@ bme280_result_one_t bme280_readPressure();
 
 bme280_result_one_t bme280_readHumidity();
 
+
+
+
+//  FIXME: ASDOJASODJASOIDJ
+void reverse(char* str, int len) 
+{ 
+    int i = 0, j = len - 1, temp; 
+    while (i < j) { 
+        temp = str[i]; 
+        str[i] = str[j]; 
+        str[j] = temp; 
+        i++; 
+        j--; 
+    } 
+} 
+
+int intToStr(int x, char str[], int d) 
+{ 
+    int i = 0; 
+    if(x < 0){
+        str[i++] = '-';
+        x = -x;
+    }
+    while (x) { 
+        str[i++] = (x % 10) + '0'; 
+        x = x / 10; 
+    } 
+ 
+    // If number of digits required is more, then 
+    // add 0s at the beginning 
+    while (i < d) 
+        str[i++] = '0'; 
+ 
+    reverse(str, i); 
+    str[i] = '\0'; 
+    return i; 
+} 
+ 
+// Converts a floating-point/double number to a string. 
+int ftoa(float n, char* res, int afterpoint) 
+{ 
+    // Extract integer part 
+    int ipart = (int)n; 
+ 
+    // Extract floating part 
+    float fpart = n - (float)ipart; 
+ 
+    // convert integer part to string 
+    int i = intToStr(ipart, res, 0); 
+    int j;
+ 
+    // check for display option after point 
+    if (afterpoint != 0) { 
+        res[i] = '.'; // add dot 
+ 
+        // Get the value of fraction part upto given no. 
+        // of points after dot. The third parameter 
+        // is needed to handle cases like 233.007 
+        fpart = fpart * pow(10, afterpoint); 
+ 
+        j = intToStr((int)fpart, res + i + 1, afterpoint); 
+    } 
+    return i + j + i;
+} 
+//  FIXME: ASDOJASODJASOIDJ
+
 bme280_result_all_t bme280_readAll()
 {
     bme280_result_all_t ret_val;
@@ -314,17 +398,64 @@ bme280_result_all_t bme280_readAll()
         return ret_val;
     }
     
-    press = (int32_t)(data[0] << 12 | data[1] << 4 | (data[2] & 0xF0) >> 4);
-    temp = (int32_t)(data[3] << 12 | data[4] << 4 | (data[5] & 0xF0) >> 4);
-    humid = (int32_t)(data[6] << 8 | data[7]);
+    press = (int32_t)((int32_t)(data[0] << 12) | (data[1] << 4) | ((data[2] & 0xF0) >> 4));
+    if(data[0] & 0x80 && press >= 0){
+        press = press * -1;
+    }
+    temp = (int32_t)((int32_t)(data[3] << 12) | (data[4] << 4) | ((data[5] & 0xF0) >> 4));
+    if(data[3] & 0x80 && temp >= 0){
+        temp = temp * -1;
+    }
+    humid = (int32_t)((int32_t)(data[6] << 8) | data[7]);
+    if(data[6] & 0x80 && humid >= 0){
+        humid = humid * -1;
+    }
+    
+    int size;
+    char str[20];
+    str[0] = 'p';
+    size = intToStr(press, str + 1, 7);
+    str[size + 1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
+    str[0] = 't';
+    size = intToStr(temp, str + 1, 7);
+    str[size+1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
+    str[0] = 'h';
+    size = intToStr(humid, str + 1, 7);
+    str[size+1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(500);
+    
 
     temp = bme280_comp_T(temp);
     press = bme280_comp_P(press);
     humid = bme280_comp_H(humid);
+    
+    str[0] = 't';
+    size = intToStr(temp, str + 1, 7);
+    str[size+1] = '\n';
+    hal_uart_sendBytes(str, size+2);
+    delay_ms(50);
 
     ret_val.temp = (float)(temp/100.0f);
     ret_val.pressure = (float)(temp/256.0f);
     ret_val.humidity = (float)(humid/1024.0f);
+    
+    // str[0] = 'p';
+    // size = ftoa(ret_val.pressure, str + 1, 2);
+    // str[size+1] = '\n';
+    // hal_uart_sendBytes(str, size+2);
+    // str[0] = 't';
+    // size = ftoa(ret_val.temp, str + 1, 2);
+    // str[size+1] = '\n';
+    // hal_uart_sendBytes(str, size+2);
+    // str[0] = 'h';
+    // size = ftoa(ret_val.humidity, str + 1, 2);
+    // str[size+1] = '\n';
+    // hal_uart_sendBytes(str, size+2);
 
     return ret_val;
 }
