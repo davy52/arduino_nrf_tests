@@ -18,5 +18,8 @@ void blink_b32(uint32_t b32);
 
 void blink_slow(uint8_t state);
 
+void itobin(int32_t value, uint8_t data[]);
+
+
 
 #endif /* DEBUG_H */

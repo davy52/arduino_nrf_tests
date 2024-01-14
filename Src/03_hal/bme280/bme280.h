@@ -135,7 +135,7 @@ bme280_result_all_t bme280_readAll();
  * 
  * @return bme280_err_t 
  */
-bme280_err_t bme280_forceMeasure();
+bme280_err_t bme280_startMeasurement();
 
 /**
  * @brief Chamge mode between energy efficient on demand and continous

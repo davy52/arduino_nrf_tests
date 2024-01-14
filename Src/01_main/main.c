@@ -52,7 +52,7 @@ int main(void)
 {
     sei();
 
-    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 40, 16);
+    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
 
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
@@ -67,13 +67,13 @@ int main(void)
     
     bme280_settings_t bme_settings = {
         .adder = 0x76,
-        .filter_setting = BME280_FILTER_2,
-        .temp_oversample = BME280_OVERSAMPLE_4,
+        .filter_setting = BME280_FILTER_DIS,
+        .temp_oversample = BME280_OVERSAMPLE_16,
         .pressure_oversample = BME280_OVERSAMPLE_4,
         .humidity_oversample = BME280_OVERSAMPLE_4,
         .sample_delay = BME280_DELAY_MS_500,
         .sens_en = BME280_SENS_ALL,
-        .mode = BME280_MODE_CONINOUS
+        .mode = BME280_MODE_ON_DEMAND
     };
     
     while(bme280_init(bme_settings) != BME280_ERR_OK){
@@ -85,10 +85,19 @@ int main(void)
 
 
     bme280_result_all_t result;
+    bme280_err_t bme_err;
     
     while(1){
-        result = bme280_readAll();
+
+        bme_err = bme280_startMeasurement();
+
+        do{
+            result = bme280_readAll();
+            delay_ms(10);
+        } while(result.error == BME280_ERR_BUSY);
+
         while(1);
-        delay_ms(3000);
+
+        delay_ms(1000);
     }
 }
