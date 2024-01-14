@@ -92,3 +92,10 @@ void blink_slow(uint8_t state)
 {
     port_set_pinState(LED_BUILTIN, state);
 }
+
+void itobin(int32_t value, uint8_t data[])
+{
+    for(int i = 0 ; i < 32; i++){
+        data[31 - i] = (value & 1 << i) != 0 ? '1' : '0';
+    }
+}
