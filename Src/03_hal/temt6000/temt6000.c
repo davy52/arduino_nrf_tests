@@ -1,5 +1,12 @@
 #include "temt6000.h"
 #include "adc.h"
+#include "stdint.h"
+
+#define temt_debug
+#ifdef temt_debug
+#include <stdio.h>
+#include "hal_uart.h"
+#endif
 
 static adc_mux_channel_t temt6000_channel;
 static float temt6000_voltage;
@@ -41,6 +48,12 @@ temt6000_err_t temt6000_getLux(float* lux)
         ret_val = TEMT6000_ERR_NOT_OK;
         return ret_val;
     }
+    
+    #ifdef temt_debug
+    uint8_t data[10];
+    uint8_t size = sprintf(data, "temt %d\n", adc_value.result);
+    hal_uart_sendBytes(data, size);
+    #endif
     
     temp_lux = adc_value.result * temt6000_channel / 1024.0;
     temp_lux = temp_lux * 2.0 / 100;
