@@ -27,7 +27,8 @@ temt6000_err_t temt6000_getLux(float* lux)
 
     adc_ret = adc_setChannel(temt6000_channel);
     if(adc_ret != ADC_ERR_NOT_OK){
-        
+        ret_val = TEMT6000_ERR_NOT_OK;
+        return ret_val; 
     }
 
     adc_ret = adc_startMeasurement();
@@ -50,13 +51,13 @@ temt6000_err_t temt6000_getLux(float* lux)
     }
     
     #ifdef temt_debug
-    uint8_t data[10];
+    uint8_t data[40];
     uint8_t size = sprintf(data, "temt %d\n", adc_value.result);
     hal_uart_sendBytes(data, size);
     #endif
     
     temp_lux = adc_value.result * temt6000_channel / 1024.0;
-    temp_lux = temp_lux * 2.0 / 100;
+    temp_lux = temp_lux * 2.0 / 100.0;
     
     *lux = temp_lux;
     return ret_val;

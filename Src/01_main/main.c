@@ -85,7 +85,8 @@ int main(void)
         delay_ms(500);
     }
     
-    adc_init(ADC_REF_INTERNAL_VCC | ADC_CHANNEL_0, ADC_PRESCALER_16, ADC_AUTO_FREE);
+    adc_init(ADC_REF_INTERNAL_VCC | ADC_CHANNEL_0, ADC_PRESCALER_64, ADC_AUTO_FREE);
+    adc_enable();
     temt6000_init(ADC_CHANNEL_0, 3.3);
     
     blink(1);
