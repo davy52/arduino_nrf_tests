@@ -23,6 +23,10 @@
 #include "bme280.h"
 
 #include "adc.h"
+#include "temt6000.h"
+
+#include <stdio.h>
+
 /*  FUSES = {
      .low = LFUSE_DEFAULT | FUSE_CKDIV8,
      .high = HFUSE_DEFAULT,
@@ -81,11 +85,19 @@ int main(void)
         delay_ms(500);
     }
     
+    adc_init(ADC_REF_INTERNAL_VCC | ADC_CHANNEL_0, ADC_PRESCALER_16, ADC_AUTO_FREE);
+    temt6000_init(ADC_CHANNEL_0, 3.3);
+    
     blink(1);
 
 
     bme280_result_all_t result;
     bme280_err_t bme_err;
+    temt6000_err_t temt_err;
+    float light;
+    
+    uint8_t data[40];
+    uint8_t size;
     
     while(1){
 
@@ -95,8 +107,12 @@ int main(void)
             result = bme280_readAll();
             delay_ms(10);
         } while(result.error == BME280_ERR_BUSY);
-
-        while(1);
+        
+        temt_err = temt6000_getLux(&light);
+        
+        size = sprintf(data, "t: %d\np: %d\nh: %d\nlux: %d\n\n", (int16_t)(result.temp * 100), (int16_t)(result.pressure * 100), (int16_t)(result.humidity * 100), (int16_t)(light * 100));
+        // size = sprintf(data, "t: %.2f\np: %.2f\nh: %.2f\nlux: %.2f\n\n", result.temp, result.pressure, result.humidity, light);
+        while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
 
         delay_ms(1000);
     }
