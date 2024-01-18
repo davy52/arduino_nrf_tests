@@ -79,10 +79,10 @@ static volatile uint16_t adc_ADC __at(0x78);
 
 void adc_init(uint8_t ref_mux_ladj, uint8_t auto_int_pre, adc_auto_src_t auto_src)
 {
-    //adc_ADMUX.reg = ref_mux_ladj;
-    //adc_ADMUX.ref_volt = (ref_mux_ladj >> 6) & 0x3;
-    //adc_ADMUX.left_adj = (ref_mux_ladj >> 5) & 0x1;
-    //adc_ADMUX.channel_sel = (ref_mux_ladj >> 0) & 0xF;
+    // adc_ADMUX.reg = ref_mux_ladj;
+    adc_ADMUX.ref_volt = (ref_mux_ladj >> 6) & 0x3;
+    adc_ADMUX.left_adj = (ref_mux_ladj >> 5) & 0x1;
+    adc_ADMUX.channel_sel = (ref_mux_ladj >> 0) & 0xF;
 
     if (ref_mux_ladj & 0x0F <= 5){
         port_set_pinMode(*port_C[ref_mux_ladj & 0x0F], PORT_INPUT);
