@@ -110,6 +110,10 @@ int main(void)
         } while(result.error == BME280_ERR_BUSY);
         
         temt_err = temt6000_getLux(&light);
+        if(temt_err != TEMT6000_ERR_OK){
+            size = sprintf(data, "TEMTERR %d =============\n", temt_err);
+            while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
+        }
         
         size = sprintf(data, "t: %d\np: %d\nh: %d\nlux: %d\n\n", (int16_t)(result.temp * 100), (int16_t)(result.pressure * 100), (int16_t)(result.humidity * 100), (int16_t)(light * 100));
         // size = sprintf(data, "t: %.2f\np: %.2f\nh: %.2f\nlux: %.2f\n\n", result.temp, result.pressure, result.humidity, light);

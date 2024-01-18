@@ -25,8 +25,11 @@ temt6000_err_t temt6000_getLux(float* lux)
     adc_measurement_t adc_value;
     float temp_lux;
 
-    adc_ret = adc_setChannel(temt6000_channel);
-    if(adc_ret != ADC_ERR_NOT_OK){
+    do{
+        adc_ret = adc_setChannel(temt6000_channel);
+    } while (adc_ret == ADC_ERR_BUSY);
+
+    if(adc_ret != ADC_ERR_OK){
         ret_val = TEMT6000_ERR_NOT_OK;
         return ret_val; 
     }
