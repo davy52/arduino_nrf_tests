@@ -124,10 +124,10 @@ adc_err_t adc_setChannel(adc_mux_channel_t channel)
     }
 
     adc_ADMUX.channel_sel = channel;
-    if(channel <= 5){ 
-        port_set_pinMode(*port_C[channel], PORT_INPUT);
-    }
-    adc_DIDR0.reg = channel;
+    // if(channel <= 5){ 
+    //     port_set_pinMode(*port_C[channel], PORT_INPUT);
+    // }
+    // adc_DIDR0.reg = channel;
     return ret_val;
 }
 
