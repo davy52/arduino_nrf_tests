@@ -125,7 +125,7 @@ int main(void)
             while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
         }
         
-        size = sprintf(data, "t: %d\np: %d\nh: %d\nlux: %d\n\n", (int16_t)(result.temp * 100), (int16_t)(result.pressure * 100), (int16_t)(result.humidity * 100), (int16_t)(light * 100));
+        size = sprintf(data, "t: %d.%d\np: %d.%d\nh: %d.%d\nlux: %d.%d\n\n", (int16_t)(result.temp), (uint16_t)(result.temp * 100) % 100, (int16_t)(result.pressure), (uint16_t)(result.pressure *100) % 100, (int16_t)(result.humidity), (uint16_t)(result.humidity * 100) % 100, (int16_t)(light), (uint16_t)(light * 100) % 100 );
         while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
 
         delay_ms(1000);

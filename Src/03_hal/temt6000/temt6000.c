@@ -59,8 +59,8 @@ temt6000_err_t temt6000_getLux(float* lux)
     hal_uart_sendBytes(data, size);
     #endif
     
-    temp_lux = adc_value.result * temt6000_channel / 1024.0;
-    temp_lux = temp_lux * 2.0 / 100.0;
+    temp_lux = adc_value.result * temt6000_voltage / 1024.0;
+    temp_lux = temp_lux * 2.0 * 100.0;
     
     *lux = temp_lux;
     return ret_val;
