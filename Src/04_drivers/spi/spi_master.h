@@ -2,7 +2,6 @@
 #define SPI_MASTER_H
 
 #include <stdint.h>
-#include "avr/io.h"
 
 #include "spi_common.h"
 
@@ -30,18 +29,19 @@ typedef enum {
 void spi_master_init(spi_common_int_en_t  int_en, spi_master_data_order_t data_order, \
         spi_master_clock_idle_t clk_idle_polarity,  spi_common_clk_phase_t clk_phase, spi_common_clk_div_t clk_div);
 
-/**
- * @brief 
- * @param data 
- */
-void spi_master_transmit(uint8_t data);
+// TODO: ?compare spi config with arguments to check if reconfiguration is needed
+//          dont know if its needed or if its faster to just change config every time you start transmitting and have 
+//          multiple spi slaves that use different configurations
+uint8_t spi_master_compareConfig();
 
 /**
- * @brief read bytes transmitted by slave
+ * @brief send data and return what has been recieved
  * 
- * @return uint8_t byte transmitted by slave
+ * @param data  transmit byte
+ * @return uint8_t recieve byte
  */
-uint8_t spi_master_read(void);
+uint8_t spi_master_transmit(uint8_t data);
+
 
 /**
  * @brief enable or disable SPI module

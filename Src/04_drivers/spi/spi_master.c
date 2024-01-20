@@ -1,9 +1,18 @@
 #include "spi_master.h"
+#include "spi_common.h"
+
+#include <avr/io.h>
+#include "port.h"
+
 #include "debug.h"
 
 void spi_master_init(spi_common_int_en_t int_en, spi_master_data_order_t data_order, \
         spi_master_clock_idle_t clk_idle_polarity, spi_common_clk_phase_t clk_phase, spi_common_clk_div_t clk_div)
 {
+    port_set_pinMode(port_B3, PORT_OUTPUT);     // MOSI
+    port_set_pinMode(port_B4, PORT_INPUT);      // MISO
+    port_set_pinMode(port_B5, PORT_OUTPUT);     // SCK
+
     uint8_t SPCR_new = 0;
 
     SPCR_new |= int_en << SPIE;
@@ -21,13 +30,10 @@ void spi_master_init(spi_common_int_en_t int_en, spi_master_data_order_t data_or
     DDRB |= (0b1011 << 2); //FIXME
 }
 
-void spi_master_transmit(uint8_t data)
+uint8_t spi_master_transmit(uint8_t data)
 {
     SPDR = data;
-}
-
-uint8_t spi_master_read(void)
-{
+    while(!(SPSR & (1 << SPIF)));
     return SPDR;
 }
 
