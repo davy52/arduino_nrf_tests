@@ -31,8 +31,8 @@ BUILD_DIR=./build
 P_NAME=arduino_common
 
 # binaries
-HEX=$(P_NAME).hex
-ELF=$(P_NAME).elf
+HEX=$(BUILD_DIR)/$(P_NAME).hex
+ELF=$(BUILD_DIR)/$(P_NAME).elf
 
 # included directories
 include Makefile_dirs.mk
@@ -55,10 +55,12 @@ $(foreach dir,$(INCLUDE_DIRS),$(eval $(call get_source_from_dirs,$(dir))))
 # objects
 OBJS2=$(foreach path, $(SRC_FILES),$(path:.c=.o))
 OBJS1=$(foreach path, $(OBJS2),$(notdir $(path)))
-OBJS=$(addprefix $(BUILD_PATH),$(OBJS1))
+OBJS=$(addprefix $(BUILD_DIR)/, $(OBJS1))
+#OBJS=$(OBJS1)
+#VPATH+=$(BUILD_DIR)
 
 
-#$(info  objs= $(OBJS))
+$(info  objs= $(OBJS))
 #$(info )
 
 # Compler options
@@ -69,33 +71,33 @@ CFLAGS += -D$(BOARD)
 # Linker options
 LDFLAGS = -mmcu=$(UC)
 
-all: $(HEX)
+all: $(BUILD_DIR) $(HEX)
 
 
 
 # object files
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c
 		@echo ""
 		@echo "compiling object $@"
-		$(CC) $(CFLAGS) $(addprefix -I,$(INCLUDE_DIRS)) -c -o $(BUILD_DIR)/$@ $^
+		$(CC) $(CFLAGS) $(addprefix -I,$(INCLUDE_DIRS)) -c -o $@ $^
 
 
 # make elf 
 $(ELF): $(OBJS)
 		@echo ""
 		@echo linking objects
-		$(CC) $(LDFLAGS) -o $(BUILD_DIR)/$@ $(addprefix $(BUILD_DIR)/,$^)
+		$(CC) $(LDFLAGS) -o $@ $^
 	
 
 # make hex
 $(HEX): $(ELF)
 		@echo ""
 		@echo making hex
-		$(ELF_TO_HEX) -O ihex -R .eeprom $(BUILD_DIR)/$^ $(BUILD_DIR)/$@
+		$(ELF_TO_HEX) -O ihex -R .eeprom $^ $@
 		@echo ""
 		@echo "Build Complete!"
 		@echo ""
-		@$(ELF_SIZE) -C --mcu=$(UC) $(BUILD_DIR)/$(ELF)
+		@$(ELF_SIZE) -C --mcu=$(UC) $(ELF)
 
 
 # build dir
