@@ -108,7 +108,7 @@ $(BUILD_DIR):
 
 # upload file to mcu
 upload:
-	avrdude.exe -p $(UC) -c arduino $(PORT_FLAG) -b 57600 -U flash:w:$(BUILD_DIR)/$(HEX)
+	avrdude.exe -p $(UC) -c arduino $(PORT_FLAG) -b 57600 -U flash:w:$(HEX)
 
 upload_new :  $(HEX) upload
 	@echo
