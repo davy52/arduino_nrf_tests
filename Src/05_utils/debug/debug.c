@@ -27,6 +27,12 @@ void delay_ms(uint32_t ms){
     }
 }
 
+void delay_us(uint32_t us){
+    while(us--){
+        _delay_us(1);
+    }
+}
+
 void blink(uint8_t n)
 {
     delay_ms(5);

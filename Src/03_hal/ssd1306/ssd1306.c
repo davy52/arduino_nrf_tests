@@ -18,22 +18,27 @@ ssd1306_err_t ssd1306_send(uint8_t command_type, uint8_t command)
     i2c_master_noirq_sendData(command_type);
     i2c_master_noirq_sendData(command);
     i2c_master_noirq_sendStop();
+    delay_ms(1);
 
     return ret_val;
 }
 
-ssd1306_err_t sd1306_sendStream(uint8_t command_type, uint8_t* stream, uint16_t stream_size)
+ssd1306_err_t ssd1306_sendStream(uint8_t command_type, uint8_t* stream, uint16_t stream_size)
 {
     ssd1306_err_t ret_val = SSD1306_ERR_OK;
     uint32_t i = 0;
+    uint8_t j = 0;
 
-    i2c_master_noirq_sendStart(((SSD1306_ADDR << 1) & 0xFE) | I2C_RW_WRITE);
-    i2c_master_noirq_sendData(command_type);
-    for(i = 0; i < stream_size; i++){
-        i2c_master_noirq_sendData(stream[i]);
+    while(i < stream_size){
+        i2c_master_noirq_sendStart(((SSD1306_ADDR << 1) & 0xFE) | I2C_RW_WRITE);
+        i2c_master_noirq_sendData(command_type);
+        for(j = 0; j < 29 && i < stream_size; j++){
+            i2c_master_noirq_sendData(stream[i]);
+            i++;
+        }
+        i2c_master_noirq_sendStop();
+        delay_ms(1);
     }
-    i2c_master_noirq_sendStop();
-    delay_ms(2);
 
     return ret_val;
 }
@@ -80,7 +85,7 @@ ssd1306_err_t ssd1306_init(uint8_t contrast)
     ssd1306_send(SSD1306_COMMAND, SSD1306_SET_DISP_OFFSET);
     ssd1306_send(SSD1306_COMMAND, 0);
     ssd1306_send(SSD1306_COMMAND, SSD1306_SET_COCK_DIV);
-    ssd1306_send(SSD1306_COMMAND, SSD1306_CLOCK_DIV | 0x80);
+    ssd1306_send(SSD1306_COMMAND, SSD1306_CLOCK_DIV & 0x80);
     ssd1306_send(SSD1306_COMMAND, SSD1306_SET_PRE_CHARGE_PERIOD);
     ssd1306_send(SSD1306_COMMAND, 0x22);
     ssd1306_send(SSD1306_COMMAND, SSD1306_COM_PINS_HARD_CONFIG);
@@ -107,7 +112,7 @@ ssd1306_err_t ssd1306_clear()
     ssd1306_setCursor(0, 0);
 
     uint8_t data[1024] = {0};
-    sd1306_sendStream(SSD1306_DATA_STREAM, data, 1024);
+    ssd1306_sendStream(SSD1306_DATA_STREAM, data, 1024);
 
     ssd1306_setCursor(0, 0);
 
@@ -157,10 +162,12 @@ ssd1306_err_t ssd1306_writeString(uint8_t *str)
 
         c -= 0x20;
 
+        uint8_t character[FONT_SIZE];
         for(uint8_t i = 0; i < FONT_SIZE; i++){
-            ssd1306_send(SSD1306_DATA, font[c][i]);
+            character[i] = font[c][i];
             ssd1306_cursor_pos++;
         }
+        ssd1306_sendStream(SSD1306_DATA_STREAM, character, FONT_SIZE);
         str++;
     }
 

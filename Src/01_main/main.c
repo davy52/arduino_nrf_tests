@@ -87,7 +87,8 @@ int main(void)
         ssd1306_writeString(data);
         ssd1306_setCursor(4, 90);
         ssd1306_writeString("KURWA!!!!");
-        ssd1306_setCursor(7, 126);
+        ssd1306_setCursor(7, 0);
+        ssd1306_writeString("___________");
 
         delay_ms(2000);
     }
