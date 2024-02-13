@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
+#include "hal_uart.h"
+#include "debug.h"
+#include <avr/io.h>
+
 
 #define __at(addr)  __attribute__((address (addr)))
 
@@ -56,6 +60,8 @@ static const uint8_t I2C_MAX_NO_NOACK = 1;
 
 volatile static i2c_job_t* i2c_job_list;
 volatile static uint8_t i2c_job_iter;
+
+volatile static uint8_t i2c_use_irq = 0;
 
 
 // static functions
@@ -200,6 +206,7 @@ i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate)
 i2c_error_t i2c_master_sendData(i2c_job_t* job)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
+    i2c_use_irq = 1;
     
     if(job->RW == I2C_RW_WRITE){
         job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_WRITE;
@@ -258,6 +265,7 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job)
 i2c_error_t i2c_master_startTransaction()
 {
     i2c_error_t ret_val = I2C_ERR_OK;
+    i2c_use_irq = 1;
 
     if(i2c_job_list == NULL){
         ret_val = I2C_ERR_NOT_OK;
@@ -273,11 +281,52 @@ i2c_error_t i2c_master_startTransaction()
     return ret_val;
 }
 
+void i2c_master_noirq_sendStart(uint8_t adder_rw)
+{
+    i2c_use_irq = 0;
+    i2c_control.int_en = 0;
+    i2c_start(); 
+    while(i2c_control.int_flag == 0);
+    i2c_status.reg;
+    i2c_data = adder_rw;
+    i2c_bits_data();
+    while(i2c_control.int_flag == 0);
+    i2c_status.reg;
+}
+
+void i2c_master_noirq_sendData(uint8_t data)
+{
+    
+    i2c_data = data;
+    i2c_bits_data();
+    while(i2c_control.int_flag == 0);
+    i2c_status.reg;
+}
+
+void i2c_master_noirq_sendStop()
+{
+    i2c_stop();
+    // while(i2c_control.int_flag == 0);
+}
+
+void i2c_master_noirq_sendStopStart()
+{
+    i2c_stopStart();
+    while(i2c_control.int_flag == 0);
+    i2c_status.reg;
+}
+
+#define I2C_USE_IRQ 0
+#if I2C_USE_IRQ == 1
 // FIXME: handle error cases - noack on write before end
 ISR(TWI_vect, ISR_BLOCK)
 {
     if(i2c_job_list == NULL){
         i2c_control.int_en = 0;
+        return;
+    }
+    
+    if(i2c_use_irq == 0){
         return;
     }
 
@@ -366,3 +415,5 @@ ISR(TWI_vect, ISR_BLOCK)
         break;
     }
 }
+
+#endif

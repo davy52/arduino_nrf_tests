@@ -17,13 +17,6 @@
  */
 i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate);
 
-/**
- * @brief change size of transmission buffer
- * 
- * @param new_size 
- * @return i2c_error_t 
- */
-i2c_error_t i2c_changeBufferSize(uint8_t new_size);
 
 /**
  * @brief send data to adder
@@ -38,6 +31,15 @@ i2c_error_t i2c_master_sendData(i2c_job_t* job);
 i2c_error_t i2c_master_appendJob(i2c_job_t* job);
 
 i2c_error_t i2c_master_startTransaction();
+
+void i2c_master_noirq_sendStart(uint8_t adder_rw);
+
+void i2c_master_noirq_sendData(uint8_t data);
+
+void i2c_master_noirq_sendStop();
+
+void i2c_master_noirq_sendStopStart();
+
 
 
 #endif /* I2C_MASTER_H */

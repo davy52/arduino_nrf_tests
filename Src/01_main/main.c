@@ -25,7 +25,10 @@
 #include "adc.h"
 #include "temt6000.h"
 
+#include "ssd1306.h"
+
 #include <stdio.h>
+#include "ssd1306_regs.h"
 
 /*  FUSES = {
      .low = LFUSE_DEFAULT | FUSE_CKDIV8,
@@ -56,7 +59,7 @@ int main(void)
 {
     sei();
 
-    hal_uart_init(F_CPU, 9600, HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
+    hal_uart_init(F_CPU, 57600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
 
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
@@ -68,66 +71,24 @@ int main(void)
         char* msg = "i2c is ok :D\n";
         hal_uart_sendBytes(msg, 13);
     }
+    delay_ms(50);
+    ssd1306_init(0xCF);
+    //hal_uart_sendBytes("ssd init\n", 9);
     
-    bme280_settings_t bme_settings = {
-        .adder = 0x76,
-        .filter_setting = BME280_FILTER_DIS,
-        .temp_oversample = BME280_OVERSAMPLE_16,
-        .pressure_oversample = BME280_OVERSAMPLE_4,
-        .humidity_oversample = BME280_OVERSAMPLE_4,
-        .sample_delay = BME280_DELAY_MS_500,
-        .sens_en = BME280_SENS_ALL,
-        .mode = BME280_MODE_ON_DEMAND
-    };
-    
-    while(bme280_init(bme_settings) != BME280_ERR_OK){
-        blink_pin(port_D4);
-        delay_ms(500);
-    }
-    
-    adc_init(ADC_REF_INTERNAL_VCC, ADC_PRESCALER_64, ADC_AUTO_FREE);
-    adc_enable();
-    temt6000_init(ADC_CHANNEL_0, 3.3);
-    
-    printByte(ADMUX);
-    printByte(ADCSRA);
-    printByte(ADCSRB);
-    printByte(DIDR0);
-    
-    blink(1);
-
-
-    bme280_result_all_t result;
-    bme280_err_t bme_err;
-    temt6000_err_t temt_err;
-    float light;
-    
-    uint8_t data[40];
-    uint8_t size;
+    uint8_t data[20];
+    uint8_t size = 0;
+    uint8_t i = 1;
     
     while(1){
+    //    ssd1306_clear();
+        ssd1306_setCursor(0, 0);
+        size = sprintf(data, "Proba: %d\n\0", i++);
+        hal_uart_sendBytes(data, size);
+        ssd1306_writeString(data);
+        ssd1306_setCursor(4, 90);
+        ssd1306_writeString("KURWA!!!!");
+        ssd1306_setCursor(7, 126);
 
-        bme_err = bme280_startMeasurement();
-
-        do{
-            result = bme280_readAll();
-            delay_ms(10);
-        } while(result.error == BME280_ERR_BUSY);
-        
-        // adc_startMeasurement();
-        // adc_measurement_t adc_ret;
-        // adc_ret = adc_getMeasurementBlock();
-        // size = sprintf(data, "adc: %d\n", adc_ret.result);
-        
-        temt_err = temt6000_getLux(&light);
-        if(temt_err != TEMT6000_ERR_OK){
-            size = sprintf(data, "TEMTERR %d =============\n", temt_err);
-            while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
-        }
-        
-        size = sprintf(data, "t: %d.%d\np: %d.%d\nh: %d.%d\nlux: %d.%d\n\n", (int16_t)(result.temp), (uint16_t)(result.temp * 100) % 100, (int16_t)(result.pressure), (uint16_t)(result.pressure *100) % 100, (int16_t)(result.humidity), (uint16_t)(result.humidity * 100) % 100, (int16_t)(light), (uint16_t)(light * 100) % 100 );
-        while(hal_uart_sendBytes(data, size) != HAL_UART_ERR_OK);
-
-        delay_ms(1000);
+        delay_ms(2000);
     }
 }
