@@ -87,22 +87,22 @@ int main(void)
         ssd1306_clear();
         ssd1306_setCursor(0, 0);
         size = sprintf(data, "Lux: %u.%u",
-            (uint16_t)(packet.lux & 0xFF00) >> 16, (uint16_t)(packet.lux & 0xFF));
+            (uint16_t)(packet.lux & 0xFFFF0000) >> 16, (uint16_t)(packet.lux & 0xFFFF));
         ssd1306_writeString(data);
 
         ssd1306_setCursor(2, 0);
         size = sprintf(data, "Temp: %u.%u",
-            (uint16_t)(packet.temp & 0xFF00) >> 16, (uint16_t)(packet.temp & 0xFF));
+            (uint16_t)(packet.temp & 0xFFFF0000) >> 16, (uint16_t)(packet.temp & 0xFFFF));
         ssd1306_writeString(data);
 
         ssd1306_setCursor(3, 0);
         size = sprintf(data, "Pressure: %u.%u",
-            (uint16_t)(packet.pressure & 0xFF00) >> 16, (uint16_t)(packet.pressure & 0xFF));
+            (uint16_t)(packet.pressure & 0xFFFF0000) >> 16, (uint16_t)(packet.pressure & 0xFFFF));
         ssd1306_writeString(data);
 
         ssd1306_setCursor(4, 0);
         size = sprintf(data, "Humidity: %u.%u",
-            (uint16_t)(packet.humidity & 0xFF00) >> 16, (uint16_t)(packet.humidity & 0xFF));
+            (uint16_t)(packet.humidity & 0xFFFF0000) >> 16, (uint16_t)(packet.humidity & 0xFFFF));
         ssd1306_writeString(data);
 
         ssd1306_setCursor(6, 0);
@@ -112,7 +112,7 @@ int main(void)
         hal_uart_writeByteNoIrq(WANT_DATA);
         delay_ms(5);
         for(uint8_t b = 0; b < 16; b++){
-            hal_uart_readByteNoIrq(((uint8_t*)&packet) + b);
+            hal_uart_readByteNoIrq(((uint8_t*)&packet) + (15 - b));
         }
         i++;
 
