@@ -88,6 +88,7 @@ int main(void)
     bme280_init( bme_settings);
             blink_pin(port_B5);
             delay_ms(50);
+    port_set_pinMode(port_C0, PORT_INPUT);
     temt6000_init(ADC_CHANNEL_0, 3.3);
             blink_pin(port_B5);
             delay_ms(50);
@@ -125,7 +126,25 @@ int main(void)
         // packet.pressure = 0x090A0B0C;
         // packet.humidity = 0x0D0E0F10;
 
-        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Lux: %d.%d\n", (uint16_t)light, (uint16_t)(light * 100)%100);
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Temp: %d.%d\n", (uint16_t)result.temp, (uint16_t)(result.temp * 100)%100);
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Pressure: %d.%d\n", (uint16_t)result.pressure, (uint16_t)(result.pressure * 100)%100);
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Humid: %d.%d\n", (uint16_t)result.humidity, (uint16_t)(result.humidity * 100)%100);
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        
+        size = sprintf(data, "Lux: %d.%d\n", (packet.lux & 0xFFFF0000) >> 16, (packet.lux & 0xFFFFF));
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Temp: %d.%d\n", (packet.temp & 0xFFFF0000) >> 16, (packet.temp & 0xFFFFF));
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Pressure: %d.%d\n", (packet.pressure & 0xFFFF0000) >> 16, (packet.pressure & 0xFFFFF));
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        size = sprintf(data, "Humidity: %d.%d\n", (packet.humidity & 0xFFFF0000) >> 16, (packet.humidity & 0xFFFFF));
+        while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
 
+
+        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
     }
 }
