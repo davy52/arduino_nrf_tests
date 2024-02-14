@@ -112,7 +112,7 @@ int main(void)
         hal_uart_writeByteNoIrq(WANT_DATA);
         delay_ms(5);
         for(uint8_t b = 0; b < 16; b++){
-            hal_uart_readByteNoIrq(((uint8_t*)&packet) + (15 - b));
+            hal_uart_readByteNoIrq(((uint8_t*)&packet) + ( b));
         }
         i++;
 
