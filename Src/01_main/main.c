@@ -42,22 +42,33 @@
 #define WANT_DATA 0x25
 
 
-typedef struct {
-    volatile float lux;
-    volatile float temp;
-    volatile float pressure;
-    volatile float humidity;
-} packet_t __attribute((packed));
+typedef union {
+    struct {
+        volatile uint32_t lux;
+        volatile uint32_t temp;
+        volatile uint32_t pressure;
+        volatile uint32_t humidity;
+    }  __attribute((packed));
+    uint8_t data[16];
+}packet_t;
 
 
  volatile packet_t packet = {0};
+
+void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
+{
+    packet->lux = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
+    packet->temp = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
+    packet->pressure = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
+    packet->humidity = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
+}
 
 
 int main(void)
 {
     sei();
 
-    hal_uart_init(F_CPU, 57600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
+    hal_uart_init(F_CPU, 9600,   HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
 
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
@@ -100,12 +111,13 @@ int main(void)
 
         temt_err = temt6000_getLux(&light);
 
-        packet.lux = light;
-        packet.temp = result.temp;
-        packet.pressure = result.pressure;
-        packet.humidity = result.humidity;
+        // pack(&packet, light, result.temp, result.pressure, result.humidity);
+        packet.lux = 0xFFFF;
+        packet.humidity = 0xAAAA;
+        packet.temp = 0xBBBB;
+        packet.pressure = 0x0505;
 
-        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
+        while(hal_uart_sendBytes(packet.data, 16) == HAL_UART_ERR_BUFF_FULL);
 
     }
 }
