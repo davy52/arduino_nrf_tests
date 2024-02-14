@@ -38,22 +38,17 @@
 
 // LOCKBITS = LOCKBITS_DEFAULT;
 
-void make_bin(uint8_t* buf, uint16_t value, uint8_t n)
-{
-    for(int i = 0; i < n; i++){
-        buf[i] = ((value >> n - i - 1) & 1) ? '1' : '0';
-    }
-    buf[n] = '\n';
-}
+#define WANT_DATA 0x25
 
-void printByte(uint8_t byte)
-{
-    uint8_t str_buf[9];
-    make_bin(str_buf, byte, 8);
-    hal_uart_sendBytes(str_buf, 9);
-    delay_ms(1000);
-    return;
-}
+typedef struct {
+    float lux;
+    float temp;
+    float pressure;
+    float humidity;
+} packet_t __attribute((packed));
+
+
+packet_t packet = {0};
 
 int main(void)
 {
@@ -63,32 +58,30 @@ int main(void)
 
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
-    delay_ms(50);
-    if(i2c_ret_val != I2C_ERR_OK){
-        char* msg = "i2c not ok\n";
-        hal_uart_sendBytes(msg, 11);
-    } else {
-        char* msg = "i2c is ok :D\n";
-        hal_uart_sendBytes(msg, 13);
-    }
-    delay_ms(50);
     ssd1306_init(0xCF);
-    //hal_uart_sendBytes("ssd init\n", 9);
     
-    uint8_t data[20];
+    uint8_t data[80];
     uint8_t size = 0;
     uint8_t i = 1;
+    uint8_t first = 1;
     
     while(1){
-    //    ssd1306_clear();
+        hal_uart_sendByte(WANT_DATA);
+        if(first == 0){
+            while(hal_uart_readBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_EMPTY);
+        }
+        else{
+            first = 0;
+        }
+
         ssd1306_setCursor(0, 0);
-        size = sprintf(data, "Proba: %d\n\0", i++);
-        hal_uart_sendBytes(data, size);
+        size = sprintf(data, "Lux: %d.%d\n\nTemp: %d.%d\nPressure: %d.%d\nHumidity: %d.%d", 
+                (uint16_t)packet.lux, (uint16_t)(packet.lux * 100)%100, 
+                (uint16_t)packet.temp, (uint16_t)(packet.temp * 100)%100, 
+                (uint16_t)packet.pressure, (uint16_t)(packet.pressure * 100)%100, 
+                (uint16_t)packet.humidity, (uint16_t)(packet.humidity * 100)%100
+            );
         ssd1306_writeString(data);
-        ssd1306_setCursor(4, 90);
-        ssd1306_writeString("KURWA!!!!");
-        ssd1306_setCursor(7, 0);
-        ssd1306_writeString("___________");
 
         delay_ms(2000);
     }
