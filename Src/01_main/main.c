@@ -19,7 +19,6 @@
 #include "arduino_boards.h"
 #include "util/delay.h"
 #include "hal_uart.h"
-#define I2C_USE_IRQ 1
 #include "i2c_master.h"
 #include "bme280.h"
 
@@ -70,10 +69,16 @@ int main(void)
 {
     sei();
 
+            blink_pin(port_B5);
+            delay_ms(50);
     hal_uart_init(F_CPU, 9600,   HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
+            blink_pin(port_B5);
+            delay_ms(50);
 
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
+            blink_pin(port_B5);
+            delay_ms(50);
     
     bme280_settings_t bme_settings = {
         .adder = 0x76,
@@ -86,7 +91,11 @@ int main(void)
         .mode = BME280_MODE_ON_DEMAND
     };
     bme280_init( bme_settings);
+            blink_pin(port_B5);
+            delay_ms(50);
     temt6000_init(ADC_CHANNEL_0, 3.3);
+            blink_pin(port_B5);
+            delay_ms(50);
     
     uint8_t data[80];
     uint8_t size = 0;
@@ -100,6 +109,8 @@ int main(void)
     while(1){
         while(hal_uart_readByte(data) == HAL_UART_ERR_BUFF_EMPTY);
         if(data[0] != WANT_DATA){
+            blink_pin(port_B5);
+            delay_ms(50);
             continue;
         }
 

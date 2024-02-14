@@ -65,7 +65,7 @@ static bme280_err_t bme280_write(uint8_t adder, uint8_t value)
     
     i2c_master_sendData(&job);
     
-    delay_ms(2); // FIXME: WTF does not work without delay
+    delay_ms(5); // FIXME: WTF does not work without delay
     while(job.status == I2C_ERR_BUSY);
     
     if(job.status == I2C_ERR_NOT_OK){
@@ -133,6 +133,7 @@ static bme280_err_t bme280_read(uint8_t adder, uint8_t len, uint8_t* data)
     while(i2c_master_appendJob(&job_write) != I2C_ERR_OK);
     while(i2c_master_appendJob(&job_read) != I2C_ERR_OK);
     i2c_master_startTransaction();
+    delay_ms(2);
     while(job_read.status == I2C_ERR_BUSY);
 
     if(job_read.status != I2C_ERR_OK || job_write.status != I2C_ERR_OK){
@@ -355,6 +356,7 @@ bme280_err_t bme280_init(bme280_settings_t settings)
     }
 
     data = (settings.sample_delay << 5) | (settings.filter_setting << 2);
+    delay_ms(2);
     ret_val = bme280_write(BME280_REG_CONFIG, data);
     if(ret_val != BME280_ERR_OK){
         return ret_val;
