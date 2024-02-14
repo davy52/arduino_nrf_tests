@@ -119,11 +119,11 @@ int main(void)
 
         temt_err = temt6000_getLux(&light);
 
-        // pack(&packet, light, result.temp, result.pressure, result.humidity);
-        packet.lux = 0x07D00032;
-        packet.temp = 0x07D00032;
-        packet.pressure = 0x07D00032;
-        packet.humidity = 0x07D00032;
+        pack(&packet, light, result.temp, result.pressure, result.humidity);
+        // packet.lux = 0x07D00032;
+        // packet.temp = 0x07D00032;
+        // packet.pressure = 0x07D00032;
+        // packet.humidity = 0x07D00032;
 
         while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
 
