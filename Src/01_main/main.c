@@ -67,32 +67,22 @@ int main(void)
 {
     sei();
 
-    hal_uart_init(F_CPU, 9600,   HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
+    hal_uart_init(F_CPU, 57600,  HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 40, 40);
+    hal_uart_err_t hal_err;
 
-        hal_uart_sendBytes("KURWA!\n", 7);
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
-        hal_uart_sendBytes("KURWA!\n", 7);
-    ssd1306_init(0xCF);
-        hal_uart_sendBytes("KURWA!\n", 7);
     
     uint8_t data[80];
     uint8_t size = 0;
     uint8_t i = 1;
     uint8_t first = 1;
     
+    ssd1306_init(0xCF);
+    
     while(1){
-        hal_uart_sendBytes("KURWA!\n", 7);
-        delay_ms(50);
-        if(first == 0){
-            while(hal_uart_sendByte(WANT_DATA) != HAL_UART_ERR_OK);
-            delay_ms(50);
-            while(hal_uart_readBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_EMPTY);
-            i++;
-        }
-        else{
-            first = 0;
-        }
+
+            
         ssd1306_clear();
         ssd1306_setCursor(0, 0);
         size = sprintf(data, "Lux: %u.%u",
@@ -118,6 +108,26 @@ int main(void)
         size = sprintf(data, "count: %d", i);
         ssd1306_writeString(data);
         
+        while(hal_uart_sendByte(WANT_DATA) != HAL_UART_ERR_OK);
+        delay_ms(5);
+        do{
+            hal_err = hal_uart_readBytes((uint8_t*)&packet, 16);
+            delay_ms(20);
+            switch (hal_err)
+            {
+            case HAL_UART_ERR_BUFF_EMPTY:
+                blink_dur(1, 1);
+                break;
+            
+            case HAL_UART_ERR_NOT_ENOUGH_IN_BUFFER:
+                blink_dur(1, 2);
+                break;
+            default:
+                break;
+            }
+
+        } while(hal_err != HAL_UART_ERR_OK);
+        i++;
 
         delay_ms(2000);
     }
