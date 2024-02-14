@@ -84,7 +84,6 @@ int main(void)
     float light;
     
     while(1){
-        hal_uart_sendBytes("kurwa\n", 6);
         while(hal_uart_readByte(data) == HAL_UART_ERR_BUFF_EMPTY);
         if(data[0] != WANT_DATA){
             continue;
