@@ -316,7 +316,6 @@ void i2c_master_noirq_sendStopStart()
     i2c_status.reg;
 }
 
-#define I2C_USE_IRQ 0
 #if I2C_USE_IRQ == 1
 // FIXME: handle error cases - noack on write before end
 ISR(TWI_vect, ISR_BLOCK)
