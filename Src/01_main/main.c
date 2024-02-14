@@ -41,15 +41,16 @@
 
 #define WANT_DATA 0x25
 
+
 typedef struct {
-    float lux;
-    float temp;
-    float pressure;
-    float humidity;
+    volatile float lux;
+    volatile float temp;
+    volatile float pressure;
+    volatile float humidity;
 } packet_t __attribute((packed));
 
 
-packet_t packet = {0};
+ volatile packet_t packet = {0};
 
 
 int main(void)
