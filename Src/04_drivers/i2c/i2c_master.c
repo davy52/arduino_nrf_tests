@@ -206,7 +206,6 @@ i2c_error_t i2c_master_init(uint32_t f_cpu, uint32_t baudrate)
 i2c_error_t i2c_master_sendData(i2c_job_t* job)
 {
     i2c_error_t ret_val = I2C_ERR_OK;
-    i2c_use_irq = 1;
     
     if(job->RW == I2C_RW_WRITE){
         job->adder = ((job->adder << 1) & 0xFE) | I2C_RW_WRITE;
@@ -265,7 +264,6 @@ i2c_error_t i2c_master_appendJob(i2c_job_t* job)
 i2c_error_t i2c_master_startTransaction()
 {
     i2c_error_t ret_val = I2C_ERR_OK;
-    i2c_use_irq = 1;
 
     if(i2c_job_list == NULL){
         ret_val = I2C_ERR_NOT_OK;
@@ -283,7 +281,6 @@ i2c_error_t i2c_master_startTransaction()
 
 void i2c_master_noirq_sendStart(uint8_t adder_rw)
 {
-    i2c_use_irq = 0;
     i2c_control.int_en = 0;
     i2c_start(); 
     while(i2c_control.int_flag == 0);
@@ -315,7 +312,7 @@ void i2c_master_noirq_sendStopStart()
     while(i2c_control.int_flag == 0);
     i2c_status.reg;
 }
-
+#define I2C_USE_IRQ 1
 #if I2C_USE_IRQ == 1
 // FIXME: handle error cases - noack on write before end
 ISR(TWI_vect, ISR_BLOCK)
@@ -325,9 +322,6 @@ ISR(TWI_vect, ISR_BLOCK)
         return;
     }
     
-    if(i2c_use_irq == 0){
-        return;
-    }
 
     switch (i2c_status.reg & (~0x07))
     {
