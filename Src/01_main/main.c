@@ -88,7 +88,10 @@ int main(void)
     bme280_init( bme_settings);
             blink_pin(port_B5);
             delay_ms(50);
+
     port_set_pinMode(port_C0, PORT_INPUT);
+    adc_init(ADC_REF_INTERNAL_VCC, ADC_PRESCALER_64, ADC_AUTO_FREE);
+    adc_enable();
     temt6000_init(ADC_CHANNEL_0, 3.3);
             blink_pin(port_B5);
             delay_ms(50);
