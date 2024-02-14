@@ -41,14 +41,27 @@
 #define WANT_DATA 0x25
 
 typedef struct {
-    volatile float lux;
-    volatile float temp;
-    volatile float pressure;
-    volatile float humidity;
+    volatile uint32_t lux;
+    volatile uint32_t temp;
+    volatile uint32_t pressure;
+    volatile uint32_t humidity;
 } packet_t __attribute((packed));
 
 
- volatile packet_t packet = {0};
+ volatile packet_t packet = {
+    .lux = 0xFFFF,
+    .temp = 0xFFFF,
+    .pressure = 0xFFFF,
+    .humidity = 0xFFFF
+ };
+
+void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
+{
+    packet->lux = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
+    packet->temp = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
+    packet->pressure = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
+    packet->humidity = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
+}
 
 int main(void)
 {
@@ -81,12 +94,23 @@ int main(void)
         }
 
         ssd1306_setCursor(0, 0);
-        size = sprintf(data, "Lux: %d.%d\n\nTemp: %d.%d\nPressure: %d.%d\nHumidity: %d.%d", 
-                (uint16_t)packet.lux, (uint16_t)(packet.lux * 100)%100, 
-                (uint16_t)packet.temp, (uint16_t)(packet.temp * 100)%100, 
-                (uint16_t)packet.pressure, (uint16_t)(packet.pressure * 100)%100, 
-                (uint16_t)packet.humidity, (uint16_t)(packet.humidity * 100)%100
-            );
+        size = sprintf(data, "Lux: %u.%u",
+            (uint16_t)(packet.lux & 0xFF00) >> 16, (uint16_t)(packet.lux & 0xFF));
+        ssd1306_writeString(data);
+
+        ssd1306_setCursor(2, 0);
+        size = sprintf(data, "Temp: %u.%u",
+            (uint16_t)(packet.temp & 0xFF00) >> 16, (uint16_t)(packet.temp & 0xFF));
+        ssd1306_writeString(data);
+
+        ssd1306_setCursor(3, 0);
+        size = sprintf(data, "Pressure: %u.%u",
+            (uint16_t)(packet.pressure & 0xFF00) >> 16, (uint16_t)(packet.pressure & 0xFF));
+        ssd1306_writeString(data);
+
+        ssd1306_setCursor(4, 0);
+        size = sprintf(data, "Humidity: %u.%u",
+            (uint16_t)(packet.humidity & 0xFF00) >> 16, (uint16_t)(packet.humidity & 0xFF));
         ssd1306_writeString(data);
 
         delay_ms(2000);
