@@ -57,12 +57,12 @@ uint8_t payload[16];
 
  volatile packet_t packet = {0};
 
-void pack(uint8_t* packet, float lux, float temp, float pressure, float humidity)
+void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
 {
-    *(uint32_t*)&(packet[0]) = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
-    *(uint32_t*)&(packet[4]) = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
-    *(uint32_t*)&(packet[8]) = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
-    *(uint32_t*)&(packet[12]) = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
+    packet->lux = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
+    packet->temp = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
+    packet->pressure = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
+    packet->humidity = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
 }
 
 
@@ -113,9 +113,9 @@ int main(void)
 
         temt_err = temt6000_getLux(&light);
 
-        pack(payload, light, result.temp, result.pressure, result.humidity);
+        pack(&packet, light, result.temp, result.pressure, result.humidity);
 
-        while(hal_uart_sendBytes(payload, 9) == HAL_UART_ERR_BUFF_FULL);
+        while(hal_uart_sendBytes(packet.data, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
 
     }
 }
