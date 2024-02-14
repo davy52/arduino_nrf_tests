@@ -67,7 +67,7 @@ int main(void)
 {
     sei();
 
-    hal_uart_init(F_CPU, 57600,  HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 20, 20);
+    hal_uart_init(F_CPU, 9600,  HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 20, 20);
     hal_uart_err_t hal_err;
 
     i2c_error_t i2c_ret_val;
