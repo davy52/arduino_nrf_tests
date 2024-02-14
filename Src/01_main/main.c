@@ -52,15 +52,17 @@ typedef union {
     uint8_t data[16];
 }packet_t;
 
+uint8_t payload[16];
+
 
  volatile packet_t packet = {0};
 
-void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
+void pack(uint8_t* packet, float lux, float temp, float pressure, float humidity)
 {
-    packet->lux = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
-    packet->temp = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
-    packet->pressure = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
-    packet->humidity = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
+    *(uint32_t*)&(packet[0]) = ((uint16_t)lux << 16) | (uint16_t)(lux * 100)%100;
+    *(uint32_t*)&(packet[4]) = ((uint16_t)temp << 16) | (uint16_t)(temp * 100)%100;
+    *(uint32_t*)&(packet[8]) = ((uint16_t)pressure << 16) | (uint16_t)(pressure * 100)%100;
+    *(uint32_t*)&(packet[12]) = ((uint16_t)humidity << 16) | (uint16_t)(humidity * 100)%100;
 }
 
 
@@ -111,13 +113,9 @@ int main(void)
 
         temt_err = temt6000_getLux(&light);
 
-        // pack(&packet, light, result.temp, result.pressure, result.humidity);
-        packet.lux = 0xFFFF;
-        packet.humidity = 0xAAAA;
-        packet.temp = 0xBBBB;
-        packet.pressure = 0x0505;
+        pack(payload, light, result.temp, result.pressure, result.humidity);
 
-        while(hal_uart_sendBytes(packet.data, 16) == HAL_UART_ERR_BUFF_FULL);
+        while(hal_uart_sendBytes(payload, 9) == HAL_UART_ERR_BUFF_FULL);
 
     }
 }
