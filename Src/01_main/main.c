@@ -41,18 +41,13 @@
 #define WANT_DATA 0x25
 
 
-typedef union {
-    struct {
-        volatile uint32_t lux;
-        volatile uint32_t temp;
-        volatile uint32_t pressure;
-        volatile uint32_t humidity;
-    }  __attribute((packed));
-    uint8_t data[16];
-}packet_t;
 
-uint8_t payload[16];
-
+typedef struct {
+    volatile uint32_t lux;
+    volatile uint32_t temp;
+    volatile uint32_t pressure;
+    volatile uint32_t humidity;
+} packet_t __attribute((packed));
 
  volatile packet_t packet = {0};
 
@@ -71,7 +66,7 @@ int main(void)
 
             blink_pin(port_B5);
             delay_ms(50);
-    hal_uart_init(F_CPU, 9600,   HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
+    hal_uart_init(F_CPU, 57600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
             blink_pin(port_B5);
             delay_ms(50);
 
@@ -124,9 +119,13 @@ int main(void)
 
         temt_err = temt6000_getLux(&light);
 
-        pack(&packet, light, result.temp, result.pressure, result.humidity);
+        // pack(&packet, light, result.temp, result.pressure, result.humidity);
+        packet.lux = 0x07D00032;
+        packet.temp = 0x07D00032;
+        packet.pressure = 0x07D00032;
+        packet.humidity = 0x07D00032;
 
-        while(hal_uart_sendBytes(packet.data, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
+        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
 
     }
 }
