@@ -88,11 +88,12 @@ int main(void)
             while(hal_uart_sendByte(WANT_DATA) != HAL_UART_ERR_OK);
             delay_ms(50);
             while(hal_uart_readBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_EMPTY);
+            i++;
         }
         else{
             first = 0;
         }
-
+        ssd1306_clear();
         ssd1306_setCursor(0, 0);
         size = sprintf(data, "Lux: %u.%u",
             (uint16_t)(packet.lux & 0xFF00) >> 16, (uint16_t)(packet.lux & 0xFF));
@@ -112,6 +113,11 @@ int main(void)
         size = sprintf(data, "Humidity: %u.%u",
             (uint16_t)(packet.humidity & 0xFF00) >> 16, (uint16_t)(packet.humidity & 0xFF));
         ssd1306_writeString(data);
+
+        ssd1306_setCursor(6, 0);
+        size = sprintf(data, "count: %d", i);
+        ssd1306_writeString(data);
+        
 
         delay_ms(2000);
     }
