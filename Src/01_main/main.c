@@ -68,6 +68,7 @@ int main(void)
     sei();
 
     hal_uart_init(F_CPU, 9600,  HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 20, 20);
+    hal_uart_disableIrq();
     hal_uart_err_t hal_err;
 
     i2c_error_t i2c_ret_val;
@@ -108,25 +109,11 @@ int main(void)
         size = sprintf(data, "count: %d", i);
         ssd1306_writeString(data);
         
-        while(hal_uart_sendByte(WANT_DATA) != HAL_UART_ERR_OK);
+        hal_uart_writeByteNoIrq(WANT_DATA);
         delay_ms(5);
-        do{
-            hal_err = hal_uart_readBytes((uint8_t*)&packet, 16);
-            delay_ms(20);
-            switch (hal_err)
-            {
-            case HAL_UART_ERR_BUFF_EMPTY:
-                blink_dur(1, 1);
-                break;
-            
-            case HAL_UART_ERR_NOT_ENOUGH_IN_BUFFER:
-                blink_dur(1, 2);
-                break;
-            default:
-                break;
-            }
-
-        } while(hal_err != HAL_UART_ERR_OK);
+        for(uint8_t b = 0; b < 16; b++){
+            hal_uart_readByteNoIrq(((uint8_t*)&packet) + b);
+        }
         i++;
 
         delay_ms(2000);

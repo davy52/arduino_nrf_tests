@@ -4,6 +4,7 @@
 #include "ring_buffer.h"
 
 #include "debug.h"
+#include <avr/io.h>
 typedef enum
 {
     HAL_UART_IDLE,
@@ -229,6 +230,33 @@ hal_uart_err_t hal_uart_response_init(uint8_t *format, uint8_t format_len, uint8
 hal_uart_err_t hal_uart_getErrs()
 {
     return (hal_uart_err_t)(usart_check_err_int() << 7);
+}
+
+hal_uart_err_t hal_uart_disableIrq()
+{
+    usart_disableRxInt();
+    usart_disableTxInt();
+}
+
+hal_uart_err_t hal_uart_enableIrq()
+{
+    usart_enableRxInt();
+    usart_enableTxInt();
+}
+
+hal_uart_err_t hal_uart_readByteNoIrq(uint8_t* data)
+{
+    while(!(UCSR0A & (1<<RXC0))); // wait for rcv complete
+    usart_read(data);
+    return HAL_UART_ERR_OK;
+}
+
+hal_uart_err_t hal_uart_writeByteNoIrq(uint8_t data)
+{
+    usart_write(data);
+    while(!(UCSR0A & (1<<TXC0))); // wait for tx complete
+    return HAL_UART_ERR_OK;
+
 }
 
 // usart_data_reg_empty_int()

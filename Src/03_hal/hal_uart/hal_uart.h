@@ -88,6 +88,14 @@ hal_uart_err_t hal_uart_getRxBufferCount(uint16_t* rx_buffer_count);
 
 hal_uart_err_t hal_uart_clearBuffers();
 
+hal_uart_err_t hal_uart_disableIrq();
+
+hal_uart_err_t hal_uart_enableIrq();
+
+hal_uart_err_t hal_uart_readByteNoIrq(uint8_t* data);
+
+hal_uart_err_t hal_uart_writeByteNoIrq(uint8_t data);
+
 /**
  * @brief function for creation of response vectors (automatic response to received packets)
  * @warning works only for one-byte size frames
