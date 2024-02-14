@@ -183,7 +183,8 @@ hal_uart_err_t hal_uart_readBytes(uint8_t *data, uint16_t data_len)
             break;
             
         case RB_ERR_LOST_WRITES:    // TODO: handle lost writes
-            return ret_val;         // handle as if its ok (gonna bite me sometime in the future)
+            ret_val = HAL_UART_ERR_NOT_OK;
+            // return ret_val;         // handle as if its ok (gonna bite me sometime in the future)
             break;
             
         default:
