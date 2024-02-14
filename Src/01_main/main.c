@@ -41,14 +41,14 @@
 #define WANT_DATA 0x25
 
 typedef struct {
-    float lux;
-    float temp;
-    float pressure;
-    float humidity;
+    volatile float lux;
+    volatile float temp;
+    volatile float pressure;
+    volatile float humidity;
 } packet_t __attribute((packed));
 
 
-packet_t packet = {0};
+ volatile packet_t packet = {0};
 
 int main(void)
 {
@@ -56,9 +56,12 @@ int main(void)
 
     hal_uart_init(F_CPU, 57600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 16, 40);
 
+        hal_uart_sendBytes("KURWA!\n", 7);
     i2c_error_t i2c_ret_val;
     i2c_ret_val = i2c_master_init(F_CPU, 20000);
+        hal_uart_sendBytes("KURWA!\n", 7);
     ssd1306_init(0xCF);
+        hal_uart_sendBytes("KURWA!\n", 7);
     
     uint8_t data[80];
     uint8_t size = 0;
@@ -66,8 +69,11 @@ int main(void)
     uint8_t first = 1;
     
     while(1){
-        hal_uart_sendByte(WANT_DATA);
+        hal_uart_sendBytes("KURWA!\n", 7);
+        delay_ms(50);
         if(first == 0){
+            while(hal_uart_sendByte(WANT_DATA) != HAL_UART_ERR_OK);
+            delay_ms(50);
             while(hal_uart_readBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_EMPTY);
         }
         else{
