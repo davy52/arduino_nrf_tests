@@ -66,7 +66,7 @@ int main(void)
 
             blink_pin(port_B5);
             delay_ms(50);
-    hal_uart_init(F_CPU, 57600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 20, 20);
+    hal_uart_init(F_CPU, 9600, HAL_UART_DOUBLE_SPEED | HAL_UART_CHAR_8BIT | HAL_UART_PARITY_DIS | HAL_UART_STOP_1BIT, 20, 20);
             blink_pin(port_B5);
             delay_ms(50);
 
