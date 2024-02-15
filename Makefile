@@ -64,7 +64,7 @@ $(info  objs= $(OBJS))
 #$(info )
 
 # Compler options
-CFLAGS = -mmcu=$(UC) -Wall -Os -g
+CFLAGS = -mmcu=$(UC) -Wall -O2 -g
 CFLAGS += -L$(DFP)/gcc/dev/atmega328p
 CFLAGS += -D$(BOARD)
 

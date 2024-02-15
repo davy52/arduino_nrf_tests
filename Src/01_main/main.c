@@ -53,10 +53,10 @@ typedef struct {
 
 void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
 {
-    packet->lux = (((uint16_t)lux) << 16) | (uint16_t)(lux * 100)%100;
-    packet->temp = (((uint16_t)temp) << 16) | (uint16_t)(temp * 100)%100;
-    packet->pressure = (((uint16_t)pressure) << 16) | (uint16_t)(pressure * 100)%100;
-    packet->humidity = (((uint16_t)humidity) << 16) | (uint16_t)(humidity * 100)%100;
+    packet->lux = (((uint32_t)lux) << 16) | (uint16_t)(lux * 100)%100;
+    packet->temp = (((uint32_t)temp) << 16) | (uint16_t)(temp * 100)%100;
+    packet->pressure = (((uint32_t)pressure) << 16) | (uint16_t)(pressure * 100)%100;
+    packet->humidity = (((uint32_t)humidity) << 16) | (uint16_t)(humidity * 100)%100;
 }
 
 
@@ -89,9 +89,10 @@ int main(void)
             blink_pin(port_B5);
             delay_ms(50);
 
-    port_set_pinMode(port_C0, PORT_INPUT);
+    // port_set_pinMode(port_C0, PORT_INPUT);
     adc_init(ADC_REF_INTERNAL_VCC, ADC_PRESCALER_64, ADC_AUTO_FREE);
     adc_enable();
+    // adc_disableInt();
     temt6000_init(ADC_CHANNEL_0, 3.3);
             blink_pin(port_B5);
             delay_ms(50);
@@ -120,7 +121,7 @@ int main(void)
             result = bme280_readAll();
             delay_ms(10);
         } while(result.error == BME280_ERR_BUSY);
-
+        delay_ms(2);
         temt_err = temt6000_getLux(&light);
 
         pack(&packet, light, result.temp, result.pressure, result.humidity);
@@ -129,6 +130,8 @@ int main(void)
         // packet.pressure = 0x090A0B0C;
         // packet.humidity = 0x0D0E0F10;
 
+        //#define DEBUG
+        #ifdef DEBUG
         size = sprintf(data, "Lux: %d.%d\n", (uint16_t)light, (uint16_t)(light * 100)%100);
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
         size = sprintf(data, "Temp: %d.%d\n", (uint16_t)result.temp, (uint16_t)(result.temp * 100)%100);
@@ -146,6 +149,7 @@ int main(void)
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
         size = sprintf(data, "Humidity: %d.%d\n", (packet.humidity & 0xFFFF0000) >> 16, (packet.humidity & 0xFFFFF));
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
+        #endif
 
 
         while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);

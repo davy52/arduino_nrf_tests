@@ -2,7 +2,7 @@
 #include "adc.h"
 #include "stdint.h"
 
-#define temt_debug
+//#define temt_debug
 #ifdef temt_debug
 #include <stdio.h>
 #include "hal_uart.h"
