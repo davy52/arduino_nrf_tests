@@ -246,7 +246,9 @@ hal_uart_err_t hal_uart_enableIrq()
 
 hal_uart_err_t hal_uart_readByteNoIrq(uint8_t* data)
 {
-    while(!(UCSR0A & (1<<RXC0))); // wait for rcv complete
+    if(!(UCSR0A & (1<<RXC0))){ // wait for rcv complete
+        return HAL_UART_ERR_BUFF_EMPTY;
+    }
     usart_read(data);
     return HAL_UART_ERR_OK;
 }

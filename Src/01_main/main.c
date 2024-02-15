@@ -109,7 +109,7 @@ int main(void)
         hal_uart_writeByteNoIrq(WANT_DATA);
         delay_ms(5);
         for(uint8_t b = 0; b < sizeof(packet_t); b++){
-            hal_uart_readByteNoIrq(((uint8_t*)&packet) + ( b));
+            while(hal_uart_readByteNoIrq(((uint8_t*)&packet) + ( b)) == HAL_UART_ERR_BUFF_EMPTY);
         }
         i++;
 
