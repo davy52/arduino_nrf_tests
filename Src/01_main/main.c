@@ -43,20 +43,20 @@
 
 
 typedef struct {
-    volatile uint32_t lux;
-    volatile uint32_t temp;
-    volatile uint32_t pressure;
-    volatile uint32_t humidity;
+    volatile uint16_t lux;
+    volatile uint16_t temp;
+    volatile uint16_t pressure;
+    volatile uint16_t humidity;
 } packet_t __attribute((packed));
 
  volatile packet_t packet = {0};
 
 void pack(packet_t* packet, float lux, float temp, float pressure, float humidity)
 {
-    packet->lux = (((uint32_t)lux) << 16) | (uint16_t)(lux * 100)%100;
-    packet->temp = (((uint32_t)temp) << 16) | (uint16_t)(temp * 100)%100;
-    packet->pressure = (((uint32_t)pressure) << 16) | (uint16_t)(pressure * 100)%100;
-    packet->humidity = (((uint32_t)humidity) << 16) | (uint16_t)(humidity * 100)%100;
+    packet->lux = (uint16_t)(lux * 100);
+    packet->temp = (uint16_t)(temp * 100);
+    packet->pressure = (uint16_t)(pressure * 100);
+    packet->humidity = (uint16_t)(humidity * 100);
 }
 
 
@@ -130,8 +130,11 @@ int main(void)
         // packet.pressure = 0x090A0B0C;
         // packet.humidity = 0x0D0E0F10;
 
-        //#define DEBUG
+        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
+
+        #define DEBUG 1
         #ifdef DEBUG
+        /*
         size = sprintf(data, "Lux: %d.%d\n", (uint16_t)light, (uint16_t)(light * 100)%100);
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
         size = sprintf(data, "Temp: %d.%d\n", (uint16_t)result.temp, (uint16_t)(result.temp * 100)%100);
@@ -140,18 +143,17 @@ int main(void)
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
         size = sprintf(data, "Humid: %d.%d\n", (uint16_t)result.humidity, (uint16_t)(result.humidity * 100)%100);
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
-        
-        size = sprintf(data, "Lux: %d.%d\n", (packet.lux & 0xFFFF0000) >> 16, (packet.lux & 0xFFFFF));
+        */
+        size = sprintf(data, "Lux: %d.%d\n", (packet.lux / 100), (packet.lux % 100));
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
-        size = sprintf(data, "Temp: %d.%d\n", (packet.temp & 0xFFFF0000) >> 16, (packet.temp & 0xFFFFF));
+        size = sprintf(data, "Temp: %d.%d\n", (packet.temp / 100), (packet.temp % 100));
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
-        size = sprintf(data, "Pressure: %d.%d\n", (packet.pressure & 0xFFFF0000) >> 16, (packet.pressure & 0xFFFFF));
+        size = sprintf(data, "Pressure: %d.%d\n", (packet.pressure / 100), (packet.pressure % 100));
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
-        size = sprintf(data, "Humidity: %d.%d\n", (packet.humidity & 0xFFFF0000) >> 16, (packet.humidity & 0xFFFFF));
+        size = sprintf(data, "Humidity: %d.%d\n", (packet.humidity / 100), (packet.humidity % 100));
         while(hal_uart_sendBytes(data, size) == HAL_UART_ERR_BUFF_FULL);
         #endif
 
 
-        while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
     }
 }
