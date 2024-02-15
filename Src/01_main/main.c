@@ -132,7 +132,7 @@ int main(void)
 
         while(hal_uart_sendBytes((uint8_t*)&packet, sizeof(packet_t)) == HAL_UART_ERR_BUFF_FULL);
 
-        #define DEBUG 1
+        //#define DEBUG 1
         #ifdef DEBUG
         /*
         size = sprintf(data, "Lux: %d.%d\n", (uint16_t)light, (uint16_t)(light * 100)%100);
